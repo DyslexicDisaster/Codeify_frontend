@@ -1,0 +1,406 @@
+:root {
+    --dark-bg: #1a1a1a;
+    --dark-secondary: #2d2d2d;
+    --accent: #00ff88;
+    --text-light: #e0e0e0;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --accent-glow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+footer {
+    background: var(--dark-secondary);
+    padding: 2rem 0;
+    margin-top: auto;
+}
+
+.social-links {
+    margin-bottom: 1rem;
+}
+
+.social-links a {
+    color: var(--text-light);
+    margin: 0 1rem;
+    font-size: 1.5rem;
+    transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+    color: var(--accent);
+}
+
+.btn-accent {
+    background-color: var(--accent);
+    color: var(--dark-bg);
+    font-weight: 600;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: var(--card-shadow);
+}
+
+.btn-accent:hover {
+    background-color: #00cc6a;
+    color: var(--dark-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--accent-glow);
+}
+
+
+.feature-card {
+    background: var(--dark-secondary);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid #333;
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--accent-glow);
+    border-color: var(--accent);
+}
+
+.feature-card i {
+    font-size: 2.5rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+}
+
+
+.question-card {
+    background: var(--dark-secondary);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #333;
+}
+
+
+.status-completed {
+    background-color: var(--accent);
+    color: var(--dark-bg);
+}
+
+.status-not-started {
+    background-color: #6c757d;
+}
+
+
+.difficulty-easy { background-color: #198754; }
+.difficulty-medium { background-color: #ffc107; color: #000; }
+.difficulty-hard { background-color: #dc3545; }
+
+.practice-section {
+    padding: 5rem 0 2rem;
+    background: linear-gradient(45deg, var(--dark-secondary), var(--dark-bg));
+    border-bottom: 1px solid #333;
+}
+
+.language-selector {
+    background: var(--dark-secondary);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #333;
+}
+
+.custom-select {
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    min-width: 200px;
+}
+
+.attempt-btn {
+    background-color: var(--accent);
+    color: var(--dark-bg);
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.attempt-btn:hover {
+    background-color: #00cc6a;
+    transform: translateY(-2px);
+    box-shadow: var(--accent-glow);
+}
+
+.progress {
+    height: 10px;
+    background-color: var(--dark-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-bar {
+    background-color: var(--accent);
+    border-radius: 10px;
+}
+
+.hero-section {
+    padding: 8rem 0;
+    background: linear-gradient(45deg, var(--dark-secondary), var(--dark-bg));
+    border-bottom: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.hero-text {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stats-section {
+    background: var(--dark-secondary);
+    padding: 3rem 0;
+    margin: 2rem 0;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+}
+
+.question-header {
+    background: var(--dark-secondary);
+    border-bottom: 1px solid #333;
+    padding: 1.5rem 0;
+}
+
+.editor-container {
+    flex-grow: 1;
+    padding: 2rem 0;
+}
+
+.editor-wrapper {
+    background: var(--dark-secondary);
+    border-radius: 15px;
+    padding: 1rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #333;
+}
+
+.difficulty-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    margin-left: 1rem;
+}
+
+.editor-area {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    height: 500px;
+    overflow: auto;
+    border-radius: 10px;
+}
+
+.editor-area .cm-editor {
+    height: 100%;
+}
+
+.editor-area .cm-scroller {
+    overflow: auto;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.editor-area .cm-gutters {
+    border-right: 1px solid #333;
+    background-color: #1e1e1e;
+    color: #888;
+}
+
+.editor-area .cm-activeLineGutter {
+    background-color: #2c313a;
+}
+
+.editor-area .cm-activeLine {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.editor-area .cm-selectionMatch {
+    background-color: rgba(0, 255, 136, 0.1);
+}
+
+.editor-area .cm-cursor {
+    border-left: 2px solid var(--accent);
+}
+
+.editor-area .cm-matchingBracket {
+    outline: 1px solid var(--accent);
+    background-color: rgba(0, 255, 136, 0.1);
+}
+
+.card {
+    background-color: var(--dark-secondary);
+    border: 1px solid #333;
+    color: var(--text-light);
+}
+
+.card-header, .card-body, .form-label, h3, label, p {
+    color: var(--text-light);
+}
+
+.form-control {
+    background-color: #333;
+    border: 1px solid #555;
+    color: var(--text-light);
+}
+
+.form-control::placeholder {
+    color: #bbb;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    color: #212529;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.25);
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--dark-bg);
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #00cc6a;
+    border-color: #00cc6a;
+    color: var(--dark-bg);
+}
+
+.btn-primary:active, .btn-primary:focus {
+    background-color: #00cc6a !important;
+    border-color: #00cc6a !important;
+    color: var(--dark-bg) !important;
+    box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.25) !important;
+}
+
+small {
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    color: #00cc6a;
+    text-decoration: underline;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #f8d7da;
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.alert-danger hr {
+    border-top-color: rgba(220, 53, 69, 0.4);
+}
+
+.alert-danger .alert-heading {
+    color: #ff6b6b;
+}
+
+.alert-danger a {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.alert-danger a:hover {
+    color: #ffc107;
+}
+
+/*accordian part*/
+.accordion-item {
+    background-color: var(--dark-secondary);
+    border: 1px solid #333;
+    margin-bottom: 0.5rem;
+}
+
+.accordion-button {
+    background-color: var(--dark-secondary);
+    color: var(--text-light);
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #3a3a3a;
+    color: var(--text-light);
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.125);
+}
+
+.accordion-button:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.25);
+}
+
+.accordion-button::after {
+    filter: invert(1);
+}
+
+.accordion-button:not(.collapsed)::after {
+    filter: invert(1);
+}
+
+.accordion-body {
+    background-color: var(--dark-secondary);
+    color: var(--text-light);
+    border-top: 1px solid #444;
+    padding: 1.5rem;
+}
+
+.question-title {
+    width: 100%;
+}
+
+.accordion-item:hover {
+    border-color: var(--accent);
+    box-shadow: var(--card-shadow);
+}
+
+.accordion-button:hover {
+    background-color: #353535;
+}
