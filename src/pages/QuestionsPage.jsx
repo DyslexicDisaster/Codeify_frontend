@@ -11,16 +11,14 @@ const QuestionsPage = ({ loggedInUser }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Fetch languages when component mounts
     useEffect(() => {
         const fetchLanguages = async () => {
             try {
                 setLoading(true);
                 const data = await getProgrammingLanguages();
-                console.log('Languages response:', data); // Debug
+                console.log('Languages response:', data);
                 setLanguages(data);
 
-                // Set the first language as selected if available
                 if (data.length > 0) {
                     setSelectedLanguage(data[0]);
                 }
