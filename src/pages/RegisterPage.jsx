@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Menu from '../components/Menu';
+import { registerUser } from '../services/userService';
 
 const RegisterPage = ({ loggedInUser }) => {
     const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ const RegisterPage = ({ loggedInUser }) => {
         password: '',
         repeatPassword: ''
     });
-
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -18,19 +19,25 @@ const RegisterPage = ({ loggedInUser }) => {
             ...prevState,
             [name]: value
         }));
+        setErrorMessage('');
     };
 
     const validateForm = () => {
-        const { password, repeatPassword } = formData;
+        const { username, email, password, repeatPassword } = formData;
         const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
+        if (!username.trim() || !email.trim() || !password || !repeatPassword) {
+            setErrorMessage("Please fill in all required fields.");
+            return false;
+        }
+
         if (!passwordPattern.test(password)) {
-            alert('Password must meet the specified requirements.');
+            setErrorMessage('Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.');
             return false;
         }
 
         if (password !== repeatPassword) {
-            alert('Passwords do not match.');
+            setErrorMessage('Passwords do not match.');
             return false;
         }
 
@@ -39,29 +46,19 @@ const RegisterPage = ({ loggedInUser }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!validateForm()) {
             return;
         }
-
         try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.ok) {
+            const response = await registerUser(formData.username, formData.password, formData.email);
+            if (response.message === "User registered successfully") {
                 navigate('/login');
             } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Registration failed');
+                setErrorMessage(response.message || 'Registration failed');
             }
         } catch (error) {
             console.error('Registration error:', error);
-            alert('An error occurred during registration');
+            setErrorMessage(error.response?.data || 'An error occurred during registration');
         }
     };
 
@@ -76,6 +73,11 @@ const RegisterPage = ({ loggedInUser }) => {
                                 <h3 className="text-center mb-0">Register for Codeify</h3>
                             </div>
                             <div className="card-body">
+                                {errorMessage && (
+                                    <div className="alert alert-danger" role="alert">
+                                        {errorMessage}
+                                    </div>
+                                )}
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-3">
                                         <label htmlFor="username" className="form-label">Username</label>
