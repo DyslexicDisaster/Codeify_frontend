@@ -8,6 +8,7 @@ import CodeEditorPage from './pages/CodeEditorPage';
 import LoginPage from './pages/LoginPage';
 import LoginFailedPage from './pages/LoginFailedPage';
 import RegisterPage from './pages/RegisterPage';
+import LogoutPage from "./pages/LogoutPage";
 
 // Import Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -36,6 +37,7 @@ const App = () => {
           <Route path="/login" element={<LoginPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />}/>
           <Route path="/login-failed" element={<LoginFailedPage loggedInUser={loggedInUser} />} />
           <Route path="/register" element={<RegisterPage loggedInUser={loggedInUser} />} />
+          <Route path="/logout" element={<LogoutPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />} />
         </Routes>
       </Router>
   );
