@@ -9,7 +9,6 @@ import LoginPage from './pages/LoginPage';
 import LoginFailedPage from './pages/LoginFailedPage';
 import RegisterPage from './pages/RegisterPage';
 
-
 // Import Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
@@ -34,7 +33,7 @@ const App = () => {
           <Route path="/questions" element={<QuestionsPage loggedInUser={loggedInUser} />} />
           <Route path="/questions/:questionId/attempt" element={<CodeEditorPage loggedInUser={loggedInUser} />} />
           <Route path="/codeEditor" element={<CodeEditorPage loggedInUser={loggedInUser} />} />
-          <Route path="/login" element={<LoginPage loggedInUser={loggedInUser} />} />
+          <Route path="/login" element={<LoginPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />}/>
           <Route path="/login-failed" element={<LoginFailedPage loggedInUser={loggedInUser} />} />
           <Route path="/register" element={<RegisterPage loggedInUser={loggedInUser} />} />
         </Routes>

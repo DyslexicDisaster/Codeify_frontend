@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Menu from '../components/Menu';
+import { loginUser } from '../services/userService';
 
-const LoginPage = ({ loggedInUser }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
+    const [formData, setFormData] = useState({
+        username: '',
+        password: ''
+    });
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+        setErrorMessage('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                localStorage.setItem('user', JSON.stringify(userData));
+            const response = await loginUser(formData.username, formData.password);
+            if (response.message === "Login successful") {
+                // Update the loggedInUser state if your app tracks it
+                setLoggedInUser(response.username);
                 navigate('/');
             } else {
-                navigate('/login-failed');
+                setErrorMessage(response.message || 'Login failed');
             }
         } catch (error) {
             console.error('Login error:', error);
-            navigate('/login-failed');
+            setErrorMessage(error.response?.data || 'An error occurred during login');
         }
     };
 
@@ -43,6 +49,11 @@ const LoginPage = ({ loggedInUser }) => {
                                 <h3 className="text-center mb-0">Login to Codeify</h3>
                             </div>
                             <div className="card-body">
+                                {errorMessage && (
+                                    <div className="alert alert-danger" role="alert">
+                                        {errorMessage}
+                                    </div>
+                                )}
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-3">
                                         <label htmlFor="username" className="form-label">Username</label>
@@ -51,11 +62,11 @@ const LoginPage = ({ loggedInUser }) => {
                                             className="form-control"
                                             id="username"
                                             name="username"
-                                            placeholder="Enter username"
+                                            placeholder="Enter your username"
                                             required
                                             autoFocus
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
+                                            value={formData.username}
+                                            onChange={handleChange}
                                         />
                                     </div>
                                     <div className="mb-3">
@@ -65,10 +76,10 @@ const LoginPage = ({ loggedInUser }) => {
                                             className="form-control"
                                             id="password"
                                             name="password"
-                                            placeholder="Enter password"
+                                            placeholder="Enter your password"
                                             required
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
+                                            value={formData.password}
+                                            onChange={handleChange}
                                         />
                                     </div>
                                     <div className="d-grid gap-2">
