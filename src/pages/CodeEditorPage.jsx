@@ -5,8 +5,9 @@ import { getQuestionById } from '../services/questionService';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { java } from '@codemirror/lang-java';
-import { python } from '@codemirror/lang-python';
+import { sql } from '@codemirror/lang-sql';
 import { dracula } from '@uiw/codemirror-theme-dracula';
+import axios from 'axios';
 
 const CodeEditorPage = ({ loggedInUser }) => {
     const { questionId } = useParams();
@@ -16,6 +17,8 @@ const CodeEditorPage = ({ loggedInUser }) => {
     const [question, setQuestion] = useState(null);
     const [code, setCode] = useState('');
     const [languageExtension, setLanguageExtension] = useState(javascript);
+    const [output, setOutput] = useState('');
+    const [isRunning, setIsRunning] = useState(false);
 
     useEffect(() => {
         const fetchQuestion = async () => {
@@ -37,8 +40,8 @@ const CodeEditorPage = ({ loggedInUser }) => {
                         case 'java':
                             setLanguageExtension(java);
                             break;
-                        case 'python':
-                            setLanguageExtension(python);
+                        case 'mysql':
+                            setLanguageExtension(sql);
                             break;
                         case 'javascript':
                         default:
@@ -67,9 +70,36 @@ const CodeEditorPage = ({ loggedInUser }) => {
     };
 
     const handleRunCode = async () => {
-        //TODO: Needs to be Implemented!
-        console.log('Running code for question:', questionId);
-        console.log('Code:', code);
+        setIsRunning(true);
+        setOutput('');
+
+        try {
+            if (question?.programmingLanguage?.name) {
+                const language = question.programmingLanguage.name.toLowerCase();
+
+                const response = await axios.post('http://localhost:8080/api/execute', {
+                    code: code,
+                    language: language
+                });
+
+                setOutput(response.data.output || 'Code executed successfully with no output.');
+            } else {
+                setOutput('Error: Cannot determine the programming language.');
+            }
+        } catch (error) {
+            console.error('Error running code:', error);
+            let errorMessage = 'An error occurred while running the code.';
+
+            if (error.response) {
+                errorMessage = error.response.data || errorMessage;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            setOutput(`Error: ${errorMessage}`);
+        } finally {
+            setIsRunning(false);
+        }
     };
 
     const handleSubmitCode = async () => {
@@ -144,8 +174,8 @@ const CodeEditorPage = ({ loggedInUser }) => {
                             </h1>
                         </div>
                         <div>
-                            <button className="btn btn-accent me-2" onClick={handleRunCode}>
-                                <i className="fas fa-play me-2"></i>Run Code
+                            <button className="btn btn-accent me-2" onClick={handleRunCode} disabled={isRunning}>
+                                <i className="fas fa-play me-2"></i>{isRunning ? 'Running...' : 'Run Code'}
                             </button>
                             <button className="btn btn-accent" onClick={handleSubmitCode}>
                                 <i className="fas fa-paper-plane me-2"></i>Submit
@@ -164,16 +194,37 @@ const CodeEditorPage = ({ loggedInUser }) => {
                                 <p>{question.description}</p>
                             </div>
                         </div>
-                        <div className="col-md-12">
+                        <div className="col-md-12 mb-4">
                             <div className="editor-wrapper">
                                 <CodeMirror
                                     value={code}
-                                    height="500px"
+                                    height="400px"
                                     theme={dracula}
                                     extensions={[languageExtension]}
                                     onChange={handleCodeChange}
                                     style={{ borderRadius: '10px', overflow: 'hidden' }}
                                 />
+                            </div>
+                        </div>
+                        <div className="col-md-12">
+                            <div className="question-card">
+                                <h5 className="mb-3">Output</h5>
+                                <div className="code-output" style={{
+                                    backgroundColor: '#282a36',
+                                    color: '#f8f8f2',
+                                    padding: '15px',
+                                    borderRadius: '10px',
+                                    fontFamily: 'monospace',
+                                    minHeight: '100px',
+                                    maxHeight: '300px',
+                                    overflowY: 'auto'
+                                }}>
+                                    {output ? (
+                                        <pre style={{ margin: 0 }}>{output}</pre>
+                                    ) : (
+                                        <span className="text-muted">Click "Run Code" to see the output here</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

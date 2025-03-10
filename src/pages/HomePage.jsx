@@ -8,7 +8,7 @@ const HomePage = ({ loggedInUser }) => {
             <section className="hero-section">
                 <div className="container text-center">
                     <h1 className="display-4 fw-bold mb-4 hero-text">Master Coding Through Practice</h1>
-                    <p className="lead mb-5">Improve your programming skills with hands-on exercises in Java, Python, and JavaScript</p>
+                    <p className="lead mb-5">Improve your programming skills with hands-on exercises in Java, MySQL, and JavaScript</p>
                     <Link to="/questions" className="btn btn-accent btn-lg">
                         <i className="fas fa-code me-2"></i>Start Learning
                     </Link>
