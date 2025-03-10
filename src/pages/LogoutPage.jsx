@@ -10,15 +10,13 @@ const LogoutPage = ({ loggedInUser, setLoggedInUser }) => {
     useEffect(() => {
         const performLogout = async () => {
             try {
-                // Call the backend logout endpoint
                 await logoutUser();
             } catch (error) {
                 console.error('Logout error:', error);
             } finally {
-                // Clear stored user information and update global state
+                // Clearing stored user information
                 localStorage.removeItem('user');
                 setLoggedInUser(null);
-                // Set the updated message
                 setMessage("You have successfully logged out have a great day");
             }
         };
