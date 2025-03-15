@@ -103,9 +103,46 @@ const CodeEditorPage = ({ loggedInUser }) => {
     };
 
     const handleSubmitCode = async () => {
-        //TODO: Needs to be Implemented!
+        // Show a confirmation dialog to the user.
+        const userConfirmed = window.confirm("Are you sure you want to submit your code?");
+        if (!userConfirmed) return;
+
         console.log('Submitting code for question:', questionId);
         console.log('Code:', code);
+
+        try {
+            // Determine the programming language from the question data.
+            const language = question?.programmingLanguage?.name?.toLowerCase();
+            if (!language) {
+                setOutput('Error: Programming language not specified.');
+                return;
+            }
+
+            // Prepare the parameters with questionId and code (as answer)
+            const params = {
+                questionId: questionId,
+                answer: code
+            };
+
+            // Send the POST request to the grade endpoint.
+            const response = await axios.post(
+                'http://localhost:8080/api/question/grade',
+                null, // No request body needed; parameters are sent as query params.
+                { params }
+            );
+
+            // After receiving the evaluation, navigate to the GradePage, passing the evaluation result.
+            navigate("/grade", { state: response.data });
+        } catch (error) {
+            console.error('Error submitting code:', error);
+            let errorMessage = 'An error occurred while submitting the code.';
+            if (error.response) {
+                errorMessage = error.response.data || errorMessage;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            setOutput(`Error: ${errorMessage}`);
+        }
     };
 
     const getColorClass = (difficulty) => {
