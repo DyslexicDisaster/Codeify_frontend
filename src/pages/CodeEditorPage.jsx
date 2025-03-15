@@ -136,17 +136,16 @@ const CodeEditorPage = ({ loggedInUser }) => {
                 return;
             }
 
-            // Prepare the parameters with questionId and code (as answer)
-            const params = {
+            // Prepare the payload as a JSON object.
+            const payload = {
                 questionId: questionId,
-                answer: code
+                answer: code  // Sending the code as the answer.
             };
 
-            // Send the POST request to the grade endpoint.
+            // Send the payload in the request body as JSON.
             const response = await axios.post(
                 'http://localhost:8080/api/question/grade',
-                null, // No request body needed; parameters are sent as query params.
-                { params }
+                payload  //payload is sent in the body.
             );
 
             // After receiving the evaluation, navigate to the GradePage, passing the evaluation result.
