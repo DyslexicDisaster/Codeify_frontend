@@ -19,6 +19,7 @@ const HomePage = ({ loggedInUser }) => {
             stats: true
         });
 
+
         const handleScroll = () => {
             const scrollPosition = window.scrollY + window.innerHeight;
             const featuresSection = document.querySelector('.features-section');
@@ -102,11 +103,11 @@ const HomePage = ({ loggedInUser }) => {
                 <div className="container">
                     <div className="row">
                         <div className="col-md-4 stat-item">
-                            <div className="stat-number counter" data-target="10">0</div>
+                            <div className="stat-number counter" data-target="10">10</div>
                             <div>Coding Challenges</div>
                         </div>
                         <div className="col-md-4 stat-item">
-                            <div className="stat-number counter" data-target="3">0</div>
+                            <div className="stat-number counter" data-target="3">3</div>
                             <div>Active Users</div>
                         </div>
                         <div className="col-md-4 stat-item">

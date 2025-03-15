@@ -5,6 +5,11 @@ const API_URL_QUESTION = 'http://localhost:8080/api/question';
 
 const API_KEY = 'Zx9ENYpcTfAruhX9U4lfoqZynG8SsV2KiER11rM487qN0qVjrJZaq59ktTuUfqITteMM8v5dVB5hd7qWAme7EQWFZbK4FIuBgMx6Wuh7PqoxUmsIqOR1eS0KsJU3Vqiw';
 axios.defaults.headers.common['x-api-key'] = API_KEY;
+
+/**
+ * Fetches all programming languages.
+ * @returns {Promise<any>} The response data from the server.
+ */
 export const getProgrammingLanguages = async () => {
     try {
         const response = await axios.get(`${API_URL_LANG}/programming_languages`);
@@ -15,6 +20,11 @@ export const getProgrammingLanguages = async () => {
     }
 };
 
+/**
+ *  Fetches all questions for a given programming language.
+ * @param languageId - The ID of the programming language.
+ * @returns {Promise<any>} The response data from the server.
+ */
 export const getQuestionsByLanguage = async (languageId) => {
     try {
         const response = await axios.get(`${API_URL_QUESTION}/questions`, {
@@ -27,9 +37,14 @@ export const getQuestionsByLanguage = async (languageId) => {
     }
 };
 
+/**
+ * Fetches a question by its ID.
+ * @param questionId - The ID of the question.
+ * @returns {Promise<any>} The response data from the server.
+ */
 export const getQuestionById = async (questionId) => {
     try {
-        const response = await axios.get(`${API_URL_QUESTION}/question/${questionId}`); // Correct path
+        const response = await axios.get(`${API_URL_QUESTION}/question/${questionId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching question:', error);
