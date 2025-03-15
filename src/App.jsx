@@ -13,6 +13,8 @@ import LogoutPage from "./pages/LogoutPage";
 // Import Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import GradePage from "./pages/GradePage";
+import AdminRoute from "./components/AdminRoute";
+import AdminPage from "./pages/AdminPage";
 
 const App = () => {
   const [loggedInUser, setLoggedInUser] = useState(null);
@@ -40,6 +42,16 @@ const App = () => {
           <Route path="/register" element={<RegisterPage loggedInUser={loggedInUser} />} />
           <Route path="/logout" element={<LogoutPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />} />
           <Route path="/grade" element={<GradePage loggedInUser={loggedInUser} />} />
+
+          <Route
+              path="/admin"
+              element={
+                <AdminRoute
+                    element={<AdminPage loggedInUser={loggedInUser} />}
+                    loggedInUser={loggedInUser}
+                />
+              }
+          />
         </Routes>
       </Router>
   );
