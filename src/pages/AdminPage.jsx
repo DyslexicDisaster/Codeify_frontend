@@ -413,7 +413,7 @@ const AdminPage = ({ loggedInUser }) => {
                         <h1 className="text-center">
                             <i className="fas fa-cogs me-2"></i>Admin Panel
                         </h1>
-                        <p className="text-center text-muted">
+                        <p className="text-center admin-subtitle">
                             Manage users and questions for the Codeify platform
                         </p>
                     </div>
@@ -538,53 +538,73 @@ const AdminPage = ({ loggedInUser }) => {
                                             <form onSubmit={handleUserSubmit}>
                                                 <div className="mb-3">
                                                     <label htmlFor="username" className="form-label">Username</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        id="username"
-                                                        name="username"
-                                                        value={userFormData.username}
-                                                        onChange={handleUserFormChange}
-                                                        required
-                                                    />
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-user"></i>
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            id="username"
+                                                            name="username"
+                                                            value={userFormData.username}
+                                                            onChange={handleUserFormChange}
+                                                            required
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="mb-3">
                                                     <label htmlFor="email" className="form-label">Email</label>
-                                                    <input
-                                                        type="email"
-                                                        className="form-control"
-                                                        id="email"
-                                                        name="email"
-                                                        value={userFormData.email}
-                                                        onChange={handleUserFormChange}
-                                                        required
-                                                    />
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-envelope"></i>
+                                                        </span>
+                                                        <input
+                                                            type="email"
+                                                            className="form-control"
+                                                            id="email"
+                                                            name="email"
+                                                            value={userFormData.email}
+                                                            onChange={handleUserFormChange}
+                                                            required
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="mb-3">
                                                     <label htmlFor="password" className="form-label">
                                                         {isEditingUser ? 'New Password (leave blank to keep current)' : 'Password'}
                                                     </label>
-                                                    <input
-                                                        type="password"
-                                                        className="form-control"
-                                                        id="password"
-                                                        name="password"
-                                                        value={userFormData.password}
-                                                        onChange={handleUserFormChange}
-                                                        required={!isEditingUser}
-                                                    />
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-lock"></i>
+                                                        </span>
+                                                        <input
+                                                            type="password"
+                                                            className="form-control"
+                                                            id="password"
+                                                            name="password"
+                                                            value={userFormData.password}
+                                                            onChange={handleUserFormChange}
+                                                            required={!isEditingUser}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="mb-3">
                                                     <label htmlFor="role" className="form-label">Role</label>
-                                                    <select
-                                                        className="form-select"
-                                                        id="role"
-                                                        value={userFormData.role}
-                                                        onChange={handleUserRoleChange}
-                                                    >
-                                                        <option value="user">User</option>
-                                                        <option value="admin">Admin</option>
-                                                    </select>
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-user-tag"></i>
+                                                        </span>
+                                                        <select
+                                                            className="form-select"
+                                                            id="role"
+                                                            value={userFormData.role}
+                                                            onChange={handleUserRoleChange}
+                                                        >
+                                                            <option value="user">User</option>
+                                                            <option value="admin">Admin</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                                 <div className="d-grid gap-2">
                                                     <button
@@ -716,33 +736,43 @@ const AdminPage = ({ loggedInUser }) => {
                                                 <div className="row">
                                                     <div className="col-md-6 mb-3">
                                                         <label htmlFor="title" className="form-label">Title</label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            id="title"
-                                                            name="title"
-                                                            value={questionFormData.title}
-                                                            onChange={handleQuestionFormChange}
-                                                            required
-                                                        />
+                                                        <div className="input-group">
+                                                            <span className="input-group-text bg-transparent">
+                                                                <i className="fas fa-heading"></i>
+                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                id="title"
+                                                                name="title"
+                                                                value={questionFormData.title}
+                                                                onChange={handleQuestionFormChange}
+                                                                required
+                                                            />
+                                                        </div>
                                                     </div>
                                                     <div className="col-md-6 mb-3">
                                                         <label htmlFor="programmingLanguage" className="form-label">
                                                             Programming Language
                                                         </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="programmingLanguage"
-                                                            value={questionFormData.programmingLanguage.id}
-                                                            onChange={handleLanguageChange}
-                                                            required
-                                                        >
-                                                            {programmingLanguages.map(lang => (
-                                                                <option key={lang.id} value={lang.id}>
-                                                                    {lang.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        <div className="input-group">
+                                                            <span className="input-group-text bg-transparent">
+                                                                <i className="fas fa-code"></i>
+                                                            </span>
+                                                            <select
+                                                                className="form-select"
+                                                                id="programmingLanguage"
+                                                                value={questionFormData.programmingLanguage.id}
+                                                                onChange={handleLanguageChange}
+                                                                required
+                                                            >
+                                                                {programmingLanguages.map(lang => (
+                                                                    <option key={lang.id} value={lang.id}>
+                                                                        {lang.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -751,32 +781,42 @@ const AdminPage = ({ loggedInUser }) => {
                                                         <label htmlFor="questionType" className="form-label">
                                                             Question Type
                                                         </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="questionType"
-                                                            value={questionFormData.questionType}
-                                                            onChange={handleQuestionTypeChange}
-                                                            required
-                                                        >
-                                                            <option value="CODE">Code</option>
-                                                            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                                                        </select>
+                                                        <div className="input-group">
+                                                            <span className="input-group-text bg-transparent">
+                                                                <i className="fas fa-list-ul"></i>
+                                                            </span>
+                                                            <select
+                                                                className="form-select"
+                                                                id="questionType"
+                                                                value={questionFormData.questionType}
+                                                                onChange={handleQuestionTypeChange}
+                                                                required
+                                                            >
+                                                                <option value="CODE">Code</option>
+                                                                <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                     <div className="col-md-4 mb-3">
                                                         <label htmlFor="difficulty" className="form-label">
                                                             Difficulty
                                                         </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="difficulty"
-                                                            value={questionFormData.difficulty}
-                                                            onChange={handleDifficultyChange}
-                                                            required
-                                                        >
-                                                            <option value="EASY">Easy</option>
-                                                            <option value="MEDIUM">Medium</option>
-                                                            <option value="HARD">Hard</option>
-                                                        </select>
+                                                        <div className="input-group">
+                                                            <span className="input-group-text bg-transparent">
+                                                                <i className="fas fa-tachometer-alt"></i>
+                                                            </span>
+                                                            <select
+                                                                className="form-select"
+                                                                id="difficulty"
+                                                                value={questionFormData.difficulty}
+                                                                onChange={handleDifficultyChange}
+                                                                required
+                                                            >
+                                                                <option value="EASY">Easy</option>
+                                                                <option value="MEDIUM">Medium</option>
+                                                                <option value="HARD">Hard</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                     <div className="col-md-4 mb-3">
                                                         <label className="form-label d-block">Options</label>
@@ -797,40 +837,55 @@ const AdminPage = ({ loggedInUser }) => {
 
                                                 <div className="mb-3">
                                                     <label htmlFor="description" className="form-label">Description</label>
-                                                    <textarea
-                                                        className="form-control"
-                                                        id="description"
-                                                        name="description"
-                                                        rows="3"
-                                                        value={questionFormData.description}
-                                                        onChange={handleQuestionFormChange}
-                                                        required
-                                                    ></textarea>
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-align-left"></i>
+                                                        </span>
+                                                        <textarea
+                                                            className="form-control"
+                                                            id="description"
+                                                            name="description"
+                                                            rows="3"
+                                                            value={questionFormData.description}
+                                                            onChange={handleQuestionFormChange}
+                                                            required
+                                                        ></textarea>
+                                                    </div>
                                                 </div>
 
                                                 <div className="mb-3">
                                                     <label htmlFor="starterCode" className="form-label">Starter Code</label>
-                                                    <textarea
-                                                        className="form-control code-textarea"
-                                                        id="starterCode"
-                                                        name="starterCode"
-                                                        rows="5"
-                                                        value={questionFormData.starterCode}
-                                                        onChange={handleQuestionFormChange}
-                                                    ></textarea>
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-code"></i>
+                                                        </span>
+                                                        <textarea
+                                                            className="form-control code-textarea"
+                                                            id="starterCode"
+                                                            name="starterCode"
+                                                            rows="5"
+                                                            value={questionFormData.starterCode}
+                                                            onChange={handleQuestionFormChange}
+                                                        ></textarea>
+                                                    </div>
                                                 </div>
 
                                                 <div className="mb-3">
                                                     <label htmlFor="correctAnswer" className="form-label">Correct Answer</label>
-                                                    <textarea
-                                                        className="form-control code-textarea"
-                                                        id="correctAnswer"
-                                                        name="correctAnswer"
-                                                        rows="5"
-                                                        value={questionFormData.correctAnswer}
-                                                        onChange={handleQuestionFormChange}
-                                                        required
-                                                    ></textarea>
+                                                    <div className="input-group">
+                                                        <span className="input-group-text bg-transparent">
+                                                            <i className="fas fa-check-circle"></i>
+                                                        </span>
+                                                        <textarea
+                                                            className="form-control code-textarea"
+                                                            id="correctAnswer"
+                                                            name="correctAnswer"
+                                                            rows="5"
+                                                            value={questionFormData.correctAnswer}
+                                                            onChange={handleQuestionFormChange}
+                                                            required
+                                                        ></textarea>
+                                                    </div>
                                                 </div>
 
                                                 <div className="d-flex justify-content-between">
@@ -943,6 +998,11 @@ const AdminPage = ({ loggedInUser }) => {
                     margin-bottom: 0.5rem;
                 }
 
+                .admin-subtitle {
+                    color: #9fa6b2;
+                    font-size: 1.1rem;
+                }
+
                 .admin-tabs .nav-link {
                     color: #ccc;
                     border: none;
@@ -969,6 +1029,10 @@ const AdminPage = ({ loggedInUser }) => {
                     color: var(--dark-bg);
                     border: none;
                     transition: all 0.3s ease;
+                    font-weight: 600;
+                    padding: 10px;
+                    border-radius: 8px;
+                    letter-spacing: 1px;
                 }
 
                 .btn-accent:hover:not(:disabled) {
@@ -990,9 +1054,9 @@ const AdminPage = ({ loggedInUser }) => {
                 }
 
                 .form-control, .form-select {
-                    background-color: var(--dark-secondary);
-                    border: 1px solid #333;
-                    color: #fff;
+                    background-color: #fff;
+                    border: 1px solid #ccc;
+                    color: #333;
                     border-radius: 8px;
                     padding: 0.6rem 1rem;
                 }
@@ -1000,8 +1064,26 @@ const AdminPage = ({ loggedInUser }) => {
                 .form-control:focus, .form-select:focus {
                     border-color: var(--accent);
                     box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.25);
+                    background-color: #fff;
+                    color: #333;
+                }
+
+                .input-group-text {
+                    border-radius: 8px;
+                    padding: 10px 15px;
+                    border-top-right-radius: 0;
+                    border-bottom-right-radius: 0;
                     background-color: var(--dark-secondary);
-                    color: #fff;
+                    border-color: #444;
+                    color: var(--accent);
+                    min-width: 45px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .input-group .form-control, .input-group .form-select {
+                    border-top-left-radius: 0;
+                    border-bottom-left-radius: 0;
                 }
 
                 .code-textarea {
@@ -1046,6 +1128,11 @@ const AdminPage = ({ loggedInUser }) => {
                 .difficulty-hard {
                     background-color: rgba(220, 53, 69, 0.2);
                     color: #ff6b6b;
+                }
+
+                .form-check-input:checked {
+                    background-color: var(--accent);
+                    border-color: var(--accent);
                 }
             `}</style>
         </Layout>
