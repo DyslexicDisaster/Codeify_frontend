@@ -39,8 +39,10 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
         try {
             const response = await loginUser(formData.username, formData.password);
             if (response.message === "Login successful") {
-                // Update the loggedInUser state if your app tracks it
-                setLoggedInUser(response.username);
+                setLoggedInUser({
+                    username: response.username,
+                    role: response.role
+                });
                 navigate('/questions');
             } else {
                 setErrorMessage(response.message || 'Login failed');
