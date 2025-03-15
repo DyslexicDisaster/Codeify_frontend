@@ -11,24 +11,48 @@ const HomePage = ({ loggedInUser }) => {
     const [isVisible, setIsVisible] = useState({
         hero: false,
         features: false,
+        slideshow: false,
         stats: false
     });
+
+    // Slideshow state
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const totalSlides = 3;
+
+    // Functions to handle slide transitions
+    const nextSlide = () => {
+        setCurrentSlide((prevSlide) => (prevSlide + 1) % totalSlides);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prevSlide) => (prevSlide - 1 + totalSlides) % totalSlides);
+    };
 
     useEffect(() => {
         setIsVisible({
             hero: true,
             features: true,
-            stats: true
+            slideshow: false,
+            stats: false
         });
 
+        // Auto-advance slideshow
+        const slideInterval = setInterval(() => {
+            nextSlide();
+        }, 5000); // Change slide every 5 seconds
 
         const handleScroll = () => {
             const scrollPosition = window.scrollY + window.innerHeight;
             const featuresSection = document.querySelector('.features-section');
+            const slideshowSection = document.querySelector('.slideshow-section');
             const statsSection = document.querySelector('.stats-section');
 
             if (featuresSection && scrollPosition > featuresSection.offsetTop + 100) {
                 setIsVisible(prev => ({ ...prev, features: true }));
+            }
+
+            if (slideshowSection && scrollPosition > slideshowSection.offsetTop + 100) {
+                setIsVisible(prev => ({ ...prev, slideshow: true }));
             }
 
             if (statsSection && scrollPosition > statsSection.offsetTop + 100) {
@@ -37,7 +61,12 @@ const HomePage = ({ loggedInUser }) => {
         };
 
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+
+        // Clean up
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            clearInterval(slideInterval);
+        }
     }, []);
 
     return (
@@ -96,6 +125,61 @@ const HomePage = ({ loggedInUser }) => {
                                 <h3 className="mb-3">Leaderboards</h3>
                                 <p>Compete with other learners and climb the ranks through consistent practice.</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className={`slideshow-section py-5 ${isVisible.slideshow ? 'active' : ''}`}>
+                <div className="container">
+                    <h2 className="text-center mb-5">Experience Codeify</h2>
+                    <div className="slideshow-container">
+                        <div className="slideshow">
+                            <div className={`slide ${currentSlide === 0 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGO5x.md.png" alt="Coding interface" className="slide-image" />
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Interactive Coding Environment</h3>
+                                    <p>Write, test, and run your code with real-time feedback</p>
+                                </div>
+                            </div>
+                            <div className={`slide ${currentSlide === 1 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGeOQ.md.png" alt="Solution feedback" className="slide-image" />
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Instant Solution Feedback</h3>
+                                    <p>Get detailed grading and suggestions to improve your code</p>
+                                </div>
+                            </div>
+                            <div className={`slide ${currentSlide === 2 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGNJj.md.png" alt="Coding progress" className="slide-image" />
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Track Your Progress</h3>
+                                    <p>Monitor your learning journey with challenges of varying difficulty</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="slideshow-controls">
+                            <button className="control-btn prev-btn" onClick={prevSlide}>
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div className="slideshow-indicators">
+                                {[0, 1, 2].map(index => (
+                                    <span
+                                        key={index}
+                                        className={`indicator ${currentSlide === index ? 'active' : ''}`}
+                                        onClick={() => setCurrentSlide(index)}
+                                    ></span>
+                                ))}
+                            </div>
+                            <button className="control-btn next-btn" onClick={nextSlide}>
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -275,6 +359,196 @@ const HomePage = ({ loggedInUser }) => {
                     }
                     to {
                         content: attr(data-target);
+                    }
+                }
+
+                /* New Slideshow Styles */
+                .slideshow-section {
+                    background-color: var(--dark-secondary);
+                    position: relative;
+                    overflow: hidden;
+                    padding: 4rem 0;
+                    opacity: 0;
+                    transform: translateY(30px);
+                    transition: opacity 1s ease, transform 1s ease;
+                    margin: 2rem 0;
+                    border-top: 1px solid rgba(0, 255, 136, 0.2);
+                    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+                }
+
+                .slideshow-section.active {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                .slideshow-section::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23026d38' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3C/g%3E%3C/svg%3E") center/cover;
+                    opacity: 0.1;
+                    z-index: 0;
+                }
+
+                .slideshow-section h2 {
+                    color: var(--accent);
+                    position: relative;
+                    z-index: 1;
+                    font-weight: bold;
+                    font-size: 2.2rem;
+                    margin-bottom: 2rem;
+                    text-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+                }
+
+                .slideshow-container {
+                    position: relative;
+                    max-width: 1000px;
+                    margin: 0 auto;
+                    border-radius: 15px;
+                    overflow: hidden;
+                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+                    z-index: 2;
+                }
+
+                .slideshow {
+                    position: relative;
+                    height: 450px;
+                }
+
+                .slide {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0;
+                    transform: scale(1.05);
+                    transition: opacity 0.8s ease, transform 0.8s ease;
+                }
+
+                .slide.active {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+
+                .slide-image-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    border-radius: 12px;
+                    overflow: hidden;
+                }
+
+                .slide-image {
+                    max-width: 95%;
+                    max-height: 95%;
+                    object-fit: contain;
+                    border-radius: 8px;
+                    border: 2px solid rgba(0, 255, 136, 0.3);
+                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+                }
+
+                .slide-caption {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    padding: 2rem;
+                    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+                    color: white;
+                    transform: translateY(30px);
+                    opacity: 0;
+                    transition: transform 0.6s ease 0.2s, opacity 0.6s ease 0.2s;
+                }
+
+                .slide.active .slide-caption {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+
+                .slide-caption h3 {
+                    color: var(--accent);
+                    margin-bottom: 0.5rem;
+                    font-size: 1.5rem;
+                }
+
+                .slideshow-controls {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10;
+                }
+
+                .control-btn {
+                    background-color: rgba(0, 0, 0, 0.5);
+                    color: white;
+                    border: none;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin: 0 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .control-btn:hover {
+                    background-color: var(--accent);
+                    color: var(--dark-bg);
+                    transform: scale(1.1);
+                }
+
+                .slideshow-indicators {
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .indicator {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background-color: rgba(255, 255, 255, 0.5);
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .indicator.active {
+                    background-color: var(--accent);
+                    transform: scale(1.2);
+                }
+
+                /* Add animations for slide transitions */
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideOutLeft {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(-100%);
+                        opacity: 0;
                     }
                 }
             `}</style>
