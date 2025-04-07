@@ -7,9 +7,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { java } from '@codemirror/lang-java';
 import { sql } from '@codemirror/lang-sql';
 import { dracula } from '@uiw/codemirror-theme-dracula';
-import axios from 'axios';
-/**References:
- * https://www.youtube.com/watch?v=znbCa4Rr054 **/
+import axiosClient from '../services/axiosClient';  // Use our custom axios client
 
 const CodeEditorPage = ({ loggedInUser }) => {
     const { questionId } = useParams();
@@ -26,9 +24,7 @@ const CodeEditorPage = ({ loggedInUser }) => {
     useEffect(() => {
         // Redirect if not logged in
         if (!loggedInUser) {
-            navigate('/login', {
-                state: { message: 'Please login to access the code editor.' }
-            });
+            navigate('/login', { state: { message: 'Please login to access the code editor.' } });
             return;
         }
 
@@ -38,6 +34,7 @@ const CodeEditorPage = ({ loggedInUser }) => {
                 const questionData = await getQuestionById(questionId);
                 setQuestion(questionData);
 
+                // Set the code using any provided starter code
                 if (questionData.starterCode) {
                     const formattedCode = questionData.starterCode
                         .split('\n')
@@ -46,8 +43,9 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     setCode(formattedCode);
                 }
 
+                // Set the correct language extension for CodeMirror
                 if (questionData.programmingLanguage) {
-                    switch(questionData.programmingLanguage.name.toLowerCase()) {
+                    switch (questionData.programmingLanguage.name.toLowerCase()) {
                         case 'java':
                             setLanguageExtension(java);
                             break;
@@ -60,7 +58,6 @@ const CodeEditorPage = ({ loggedInUser }) => {
                             break;
                     }
                 }
-
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching question:', err);
@@ -76,10 +73,12 @@ const CodeEditorPage = ({ loggedInUser }) => {
         }
     }, [questionId, navigate, loggedInUser]);
 
+    // Updates code in state from the editor component
     const handleCodeChange = (value) => {
         setCode(value);
     };
 
+    // Runs the code using the backend execute endpoint.
     const handleRunCode = async () => {
         setIsRunning(true);
         setOutput('');
@@ -89,15 +88,13 @@ const CodeEditorPage = ({ loggedInUser }) => {
             if (question?.programmingLanguage?.name) {
                 const language = question.programmingLanguage.name.toLowerCase();
 
-                const response = await axios.post('http://localhost:8080/api/execute', {
+                // Send the request to the /api/execute endpoint using axiosClient
+                const response = await axiosClient.post('/api/execute', {
                     code: code,
                     language: language
                 });
-
                 const outputText = response.data.output || 'Code executed successfully with no output.';
                 setOutput(outputText);
-
-                // If there's no error message in the output, mark as success
                 setRunSuccess(!outputText.toLowerCase().includes('error'));
             } else {
                 setOutput('Error: Cannot determine the programming language.');
@@ -106,13 +103,11 @@ const CodeEditorPage = ({ loggedInUser }) => {
         } catch (error) {
             console.error('Error running code:', error);
             let errorMessage = 'An error occurred while running the code.';
-
             if (error.response) {
                 errorMessage = error.response.data || errorMessage;
             } else if (error.message) {
                 errorMessage = error.message;
             }
-
             setOutput(`Error: ${errorMessage}`);
             setRunSuccess(false);
         } finally {
@@ -120,35 +115,31 @@ const CodeEditorPage = ({ loggedInUser }) => {
         }
     };
 
+    // Submits the code for grading using the /api/question/grade endpoint.
     const handleSubmitCode = async () => {
-        // Show a confirmation dialog to the user.
+        // Show a confirmation dialog to the user
         const userConfirmed = window.confirm("Are you sure you want to submit your code?");
         if (!userConfirmed) return;
 
-        console.log('Submitting code for question:', questionId);
-        console.log('Code:', code);
-
         try {
-            // Determine the programming language from the question data.
             const language = question?.programmingLanguage?.name?.toLowerCase();
             if (!language) {
                 setOutput('Error: Programming language not specified.');
                 return;
             }
 
-            // Prepare the payload as a JSON object.
+            // Prepare the payload as JSON; the backend expects { questionId, answer }
             const payload = {
                 questionId: questionId,
-                answer: code  // Sending the code as the answer.
+                answer: code
             };
 
-            // Send the payload in the request body as JSON.
-            const response = await axios.post(
-                'http://localhost:8080/api/question/grade',
-                payload  //payload is sent in the body.
-            );
+            // Send the grading request using axiosClient so the JWT cookie is automatically included.
+            const response = await axiosClient.post('/api/question/grade', payload, {
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-            // After receiving the evaluation, navigate to the GradePage, passing the evaluation result.
+            // Navigate to the GradePage, passing the evaluation results in state.
             navigate("/grade", { state: response.data });
         } catch (error) {
             console.error('Error submitting code:', error);
@@ -164,7 +155,6 @@ const CodeEditorPage = ({ loggedInUser }) => {
 
     const getColorClass = (difficulty) => {
         if (!difficulty) return '';
-
         switch (difficulty) {
             case 'EASY':
                 return 'difficulty-easy';
@@ -303,65 +293,38 @@ const CodeEditorPage = ({ loggedInUser }) => {
                 </div>
             </main>
 
-            <style jsx>{`
+            <style>{`
                 .main-content {
                     min-height: calc(100vh - 250px);
                 }
-                
                 .fade-in {
                     animation: fadeIn 0.5s ease-in-out forwards;
                 }
-                
                 .slide-in-left {
                     animation: slideInLeft 0.5s ease-in-out forwards;
                 }
-                
                 .slide-in-right {
                     animation: slideInRight 0.5s ease-in-out forwards;
                 }
-                
                 .slide-in-bottom {
                     animation: slideInBottom 0.5s ease-in-out forwards;
                 }
-                
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
                 }
-                
                 @keyframes slideInLeft {
-                    from { 
-                        opacity: 0;
-                        transform: translateX(-20px);
-                    }
-                    to { 
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
+                    from { opacity: 0; transform: translateX(-20px); }
+                    to { opacity: 1; transform: translateX(0); }
                 }
-                
                 @keyframes slideInRight {
-                    from { 
-                        opacity: 0;
-                        transform: translateX(20px);
-                    }
-                    to { 
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
+                    from { opacity: 0; transform: translateX(20px); }
+                    to { opacity: 1; transform: translateX(0); }
                 }
-                
                 @keyframes slideInBottom {
-                    from { 
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to { 
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                
                 .loading-container {
                     display: flex;
                     flex-direction: column;
@@ -369,26 +332,22 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     justify-content: center;
                     min-height: 50vh;
                 }
-                
                 .loading-text {
                     font-size: 1.2rem;
                     color: var(--accent);
                     animation: pulse 1.5s infinite;
                 }
-                
                 @keyframes pulse {
                     0% { opacity: 0.6; }
                     50% { opacity: 1; }
                     100% { opacity: 0.6; }
                 }
-                
                 .question-header {
                     background: var(--dark-secondary);
                     border-bottom: 1px solid #333;
                     padding: 1.5rem 0;
                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 }
-                
                 .difficulty-badge {
                     display: inline-block;
                     padding: 0.35rem 1rem;
@@ -398,13 +357,11 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     margin-left: 1rem;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 }
-                
                 .run-btn, .submit-btn {
                     position: relative;
                     overflow: hidden;
                     z-index: 1;
                 }
-                
                 .run-btn:before, .submit-btn:before {
                     content: '';
                     position: absolute;
@@ -416,17 +373,14 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     z-index: -1;
                     transition: width 0.3s ease;
                 }
-                
                 .run-btn:hover:not(:disabled):before, 
                 .submit-btn:hover:before {
                     width: 100%;
                 }
-                
                 .run-btn:disabled {
                     opacity: 0.7;
                     cursor: not-allowed;
                 }
-                
                 .question-card {
                     background: var(--dark-secondary);
                     border-radius: 15px;
@@ -436,12 +390,10 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     border: 1px solid #333;
                     transition: all 0.3s ease;
                 }
-                
                 .question-card:hover {
                     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
                     border-color: #444;
                 }
-                
                 .editor-wrapper {
                     border-radius: 15px;
                     overflow: hidden;
@@ -449,12 +401,10 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     transition: all 0.3s ease;
                     border: 1px solid #333;
                 }
-                
                 .editor-wrapper:hover {
                     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25), 0 0 10px rgba(0, 255, 136, 0.1);
                     border-color: var(--accent);
                 }
-                
                 .code-output {
                     background-color: #282a36;
                     color: #f8f8f2;
@@ -467,16 +417,13 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     transition: all 0.3s ease;
                     border: 1px solid #333;
                 }
-                
                 .code-output:hover {
                     border-color: #444;
                 }
-                
                 .output-text {
                     margin: 0;
                     white-space: pre-wrap;
                 }
-                
                 .empty-output {
                     display: flex;
                     flex-direction: column;
@@ -485,18 +432,15 @@ const CodeEditorPage = ({ loggedInUser }) => {
                     height: 100px;
                     color: #6c757d;
                 }
-                
                 .output-status {
                     font-size: 0.85rem;
                     padding: 0.25rem 0.75rem;
                     border-radius: 50px;
                 }
-                
                 .output-status.success {
                     background-color: rgba(40, 167, 69, 0.2);
                     color: #5cb85c;
                 }
-                
                 .output-status.error {
                     background-color: rgba(220, 53, 69, 0.2);
                     color: #ff6b6b;
