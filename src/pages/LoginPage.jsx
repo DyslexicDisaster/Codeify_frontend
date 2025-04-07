@@ -30,8 +30,9 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
         setIsLoading(true);
         try {
             const response = await loginUser(formData.username, formData.password);
+            console.log("Login response:", response);
+
             if (response.message === "Login successful" && response.token) {
-                // Store the token in a cookie that expires in 1 day.
                 Cookies.set('jwtToken', response.token, { expires: 1, secure: false, sameSite: 'Lax' });
                 setLoggedInUser({
                     username: response.username,
@@ -67,7 +68,7 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
                             <div className="card-body p-4">
                                 {errorMessage && (
                                     <div className="alert alert-danger" role="alert">
-                                        {errorMessage}
+                                        {typeof errorMessage === 'object' ? errorMessage.message : errorMessage}
                                     </div>
                                 )}
                                 <form onSubmit={handleSubmit}>
@@ -129,6 +130,20 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
                                 <p className="mb-0">
                                     Don't have an account? <Link to="/register">Register here</Link>
                                 </p>
+                            </div>
+                            <div className="social-logins mt-4 text-center">
+                                <p className="text-muted">or sign in with</p>
+                                <div className="d-flex justify-content-center gap-3">
+                                    <a href="http://localhost:8080/oauth2/authorization/google" className="btn btn-outline-danger">
+                                        <i className="fab fa-google me-1"></i> Google
+                                    </a>
+                                    <a href="http://localhost:8080/oauth2/authorization/github" className="btn btn-outline-dark">
+                                        <i className="fab fa-github me-1"></i> GitHub
+                                    </a>
+                                    <a href="http://localhost:8080/oauth2/authorization/microsoft" className="btn btn-outline-primary">
+                                        <i className="fab fa-microsoft me-1"></i> Microsoft
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

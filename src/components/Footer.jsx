@@ -5,10 +5,7 @@ const Footer = () => {
         <footer>
             <div className="container text-center">
                 <div className="social-links">
-                    <a href="#"><i className="fab fa-github"></i></a>
-                    <a href="#"><i className="fab fa-twitter"></i></a>
-                    <a href="#"><i className="fab fa-linkedin"></i></a>
-                    <a href="#"><i className="fab fa-discord"></i></a>
+                    /* Add your social media links here */
                 </div>
                 <p className="mb-0">&copy; {new Date().getFullYear()} Codeify. All rights reserved.</p>
             </div>

@@ -1,7 +1,7 @@
 
 import axiosClient from "./axiosClient";
 
-const API_URL_USER = 'http://localhost:8080/api/user';
+const API_URL_USER = 'http://localhost:8080/api/auth';
 
 /**
  * Registers a new user.
@@ -13,10 +13,14 @@ const API_URL_USER = 'http://localhost:8080/api/user';
  */
 export const registerUser = async (username, password, email) => {
     try {
-        const response = await axiosClient.post('/api/user/register', {
-            username,
-            password,
-            email
+        const response = await axiosClient.post('/api/auth/register', new URLSearchParams({
+            username: username,
+            password: password,
+            email: email
+        }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
         });
         return response.data;
     } catch (error) {
@@ -37,13 +41,23 @@ export const registerUser = async (username, password, email) => {
  */
 export const loginUser = async (username, password) => {
     try {
-        const response = await axiosClient.post(`${API_URL_USER}/login`, null, {
-            params: { username, password }
+        const response = await axiosClient.post('/api/auth/login', new URLSearchParams({
+            username: username,
+            password: password
+        }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
         });
-        return response.data;
+
+        if (response && response.data && typeof response.data === 'object') {
+            return response.data;
+        } else {
+            throw new Error('Unexpected response format');
+        }
     } catch (error) {
-        console.error('Error logging in user:', error);
-        throw error;
+        console.error('Error logging in user:', error.message);
+        throw new Error(error.message);
     }
 };
 

@@ -51,26 +51,21 @@ const RegisterPage = ({ loggedInUser }) => {
     // After a successful registration, navigate to the login page with a success message.
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) {
-            console.log("Validation failed", formData);
-            return;
-        }
-
         setIsLoading(true);
-
         try {
             const response = await registerUser(formData.username, formData.password, formData.email);
             console.log("Register response:", response);
-            if (response.message === "User registered successfully") {
+
+            if (response === "User registered successfully") {
                 navigate('/login', {
                     state: { message: 'Registration successful! Please login with your new account.' }
                 });
             } else {
-                setErrorMessage(response.message || 'Registration failed');
+                setErrorMessage(response || 'Registration failed');
             }
         } catch (error) {
             console.error('Registration error:', error);
-            setErrorMessage(error.response?.data || 'An error occurred during registration');
+            setErrorMessage(error.message || 'An error occurred during registration');
         } finally {
             setIsLoading(false);
         }
