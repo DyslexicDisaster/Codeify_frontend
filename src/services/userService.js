@@ -42,14 +42,14 @@ export const registerUser = async (username, password, email) => {
 export const loginUser = async (username, password) => {
     try {
         const response = await axiosClient.post('/api/auth/login', new URLSearchParams({
-            username: username,
-            password: password
+            username,
+            password
         }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
+        console.log("Raw login response:", response.data);
         if (response && response.data && typeof response.data === 'object') {
             return response.data;
         } else {
@@ -60,6 +60,7 @@ export const loginUser = async (username, password) => {
         throw new Error(error.message);
     }
 };
+
 
 /**
  * Logs out the current user.
