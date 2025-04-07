@@ -1,10 +1,7 @@
-import axios from "axios";
+
+import axiosClient from "./axiosClient";
 
 const API_URL_USER = 'http://localhost:8080/api/user';
-const API_KEY = 'Zx9ENYpcTfAruhX9U4lfoqZynG8SsV2KiER11rM487qN0qVjrJZaq59ktTuUfqITteMM8v5dVB5hd7qWAme7EQWFZbK4FIuBgMx6Wuh7PqoxUmsIqOR1eS0KsJU3Vqiw';
-
-// Set the API key header for all requests
-axios.defaults.headers.common['x-api-key'] = API_KEY;
 
 /**
  * Registers a new user.
@@ -16,9 +13,10 @@ axios.defaults.headers.common['x-api-key'] = API_KEY;
  */
 export const registerUser = async (username, password, email) => {
     try {
-        // Sending a POST request to /register with username, password, and email as query parameters.
-        const response = await axios.post(`${API_URL_USER}/register`, null, {
-            params: { username, password, email }
+        const response = await axiosClient.post('/api/user/register', {
+            username,
+            password,
+            email
         });
         return response.data;
     } catch (error) {
@@ -30,14 +28,16 @@ export const registerUser = async (username, password, email) => {
 /**
  * Logs in a user.
  *
+ * Since the backend now sets the JWT as an HttpOnly cookie,
+ * this function does not need to manually store the token.
+ *
  * @param {string} username - The user's username.
  * @param {string} password - The user's password.
  * @returns {Promise<object>} The response data from the server.
  */
 export const loginUser = async (username, password) => {
     try {
-        // Sending a POST request to /login with username and password as query parameters.
-        const response = await axios.post(`${API_URL_USER}/login`, null, {
+        const response = await axiosClient.post(`${API_URL_USER}/login`, null, {
             params: { username, password }
         });
         return response.data;
@@ -54,8 +54,7 @@ export const loginUser = async (username, password) => {
  */
 export const logoutUser = async () => {
     try {
-        // Sending a GET request to /logout
-        const response = await axios.get(`${API_URL_USER}/logout`);
+        const response = await axiosClient.get(`${API_URL_USER}/logout`);
         return response.data;
     } catch (error) {
         console.error('Error logging out user:', error);

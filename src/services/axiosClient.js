@@ -1,25 +1,10 @@
 import axios from 'axios';
 
-//refrances: https://medium.com/@vdsnini/understanding-interceptors-in-axios-intercepting-and-enhancing-http-requests-5cdfb53a6b51
-//https://axios-http.com/docs/interceptors
-
 const axiosClient = axios.create({
     baseURL: 'http://localhost:8080',
+    withCredentials: true, // Ensure cookies are sent with every request
 });
 
-axiosClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('jwtToken');
-        if (token) {
-            // Attach the token to the Authorization header.
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        // Handle errors in the request.
-        return Promise.reject(error);
-    }
-);
+//axiosClient.defaults.headers.common['x-api-key'] = 'Zx9ENYpcTfAruhX9U4lfoqZynG8SsV2KiER11rM487qN0qVjrJZaq59ktTuUfqITteMM8v5dVB5hd7qWAme7EQWFZbK4FIuBgMx6Wuh7PqoxUmsIqOR1eS0KsJU3Vqiw';
 
 export default axiosClient;

@@ -14,6 +14,7 @@ const RegisterPage = ({ loggedInUser }) => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
+    // Handle input changes and clear any previous error messages.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({
@@ -23,6 +24,7 @@ const RegisterPage = ({ loggedInUser }) => {
         setErrorMessage('');
     };
 
+    // Validate form data before submission.
     const validateForm = () => {
         const { username, email, password, repeatPassword } = formData;
         const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -45,9 +47,12 @@ const RegisterPage = ({ loggedInUser }) => {
         return true;
     };
 
+    // Handle form submission.
+    // After a successful registration, navigate to the login page with a success message.
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) {
+            console.log("Validation failed", formData);
             return;
         }
 
@@ -55,6 +60,7 @@ const RegisterPage = ({ loggedInUser }) => {
 
         try {
             const response = await registerUser(formData.username, formData.password, formData.email);
+            console.log("Register response:", response);
             if (response.message === "User registered successfully") {
                 navigate('/login', {
                     state: { message: 'Registration successful! Please login with your new account.' }

@@ -14,10 +14,11 @@ const LogoutPage = ({ loggedInUser, setLoggedInUser }) => {
             } catch (error) {
                 console.error('Logout error:', error);
             } finally {
-                // Clearing stored user information
+                // Clear both the user object and the JWT token from localStorage
                 localStorage.removeItem('user');
+                localStorage.removeItem('jwtToken');
                 setLoggedInUser(null);
-                setMessage("You have successfully logged out have a great day");
+                setMessage("You have successfully logged out. Have a great day!");
             }
         };
 

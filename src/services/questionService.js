@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosClient from "./axiosClient";
 
 const API_URL_LANG = 'http://localhost:8080/api/programming_language';
 const API_URL_QUESTION = 'http://localhost:8080/api/question';
@@ -12,7 +13,7 @@ axios.defaults.headers.common['x-api-key'] = API_KEY;
  */
 export const getProgrammingLanguages = async () => {
     try {
-        const response = await axios.get(`${API_URL_LANG}/programming_languages`);
+        const response = await axiosClient.get(`${API_URL_LANG}/programming_languages`);
         return response.data;
     } catch (error) {
         console.error('Error fetching languages:', error);
@@ -21,13 +22,13 @@ export const getProgrammingLanguages = async () => {
 };
 
 /**
- *  Fetches all questions for a given programming language.
- * @param languageId - The ID of the programming language.
+ * Fetches all questions for a given programming language.
+ * @param {number} languageId - The ID of the programming language.
  * @returns {Promise<any>} The response data from the server.
  */
 export const getQuestionsByLanguage = async (languageId) => {
     try {
-        const response = await axios.get(`${API_URL_QUESTION}/questions`, {
+        const response = await axiosClient.get(`${API_URL_QUESTION}/questions`, {
             params: { languageId }
         });
         return response.data;
@@ -39,12 +40,12 @@ export const getQuestionsByLanguage = async (languageId) => {
 
 /**
  * Fetches a question by its ID.
- * @param questionId - The ID of the question.
+ * @param {number} questionId - The ID of the question.
  * @returns {Promise<any>} The response data from the server.
  */
 export const getQuestionById = async (questionId) => {
     try {
-        const response = await axios.get(`${API_URL_QUESTION}/question/${questionId}`);
+        const response = await axiosClient.get(`${API_URL_QUESTION}/question/${questionId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching question:', error);
