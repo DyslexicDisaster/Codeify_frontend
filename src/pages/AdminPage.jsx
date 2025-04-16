@@ -934,7 +934,7 @@ const AdminPage = ({ loggedInUser }) => {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .main-content {
                     min-height: calc(100vh - 250px);
                 }

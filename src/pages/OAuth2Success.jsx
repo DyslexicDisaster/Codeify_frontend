@@ -1,32 +1,37 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ACCESS_TOKEN } from '../constants'; // Now properly imported
 
 const OAuth2Success = () => {
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(location.search);
         const token = urlParams.get('token');
-        const name = urlParams.get('name');
+        const error = urlParams.get('error');
 
-        if (token && name) {
-            const user = {
-                username: name,
-                token: token,
-                role: 'USER' // Or extract from token if you want
-            };
-            localStorage.setItem('user', JSON.stringify(user));
-            navigate('/questions');
+        if (token) {
+            localStorage.setItem(ACCESS_TOKEN, token);
+            navigate('/', {
+                state: { from: location },
+                replace: true
+            });
         } else {
-            navigate('/login');
+            navigate('/login', {
+                state: {
+                    error: error || 'Authentication failed'
+                },
+                replace: true
+            });
         }
-    }, [navigate]);
+    }, [navigate, location]);
 
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
             <div className="text-center">
-                <div className="spinner-border text-accent" role="status" />
-                <p className="mt-3">Logging you in...</p>
+                <div className="spinner-border text-primary" role="status" />
+                <p className="mt-3">Completing authentication...</p>
             </div>
         </div>
     );

@@ -1,11 +1,15 @@
+// src/components/Layout.jsx
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import Menu from './Menu';
 import Footer from './Footer';
 
-const Layout = ({ children, loggedInUser }) => {
+const Layout = ({ children }) => {
+    const { user } = useAuth();
+
     return (
         <>
-            <Menu loggedInUser={loggedInUser} />
+            <Menu user={user} />
             <main>{children}</main>
             <Footer />
         </>

@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const Menu = ({ loggedInUser }) => {
-    const isAdmin = loggedInUser && loggedInUser.role === 'admin';
+const Menu = () => {
+    const { user, logout } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -31,7 +33,7 @@ const Menu = ({ loggedInUser }) => {
                             </Link>
                         </li>
 
-                        {loggedInUser && (
+                        {user && (
                             <>
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/questions">
@@ -57,7 +59,7 @@ const Menu = ({ loggedInUser }) => {
                     </ul>
 
                     <ul className="navbar-nav">
-                        {!loggedInUser ? (
+                        {!user ? (
                             <>
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/register">
@@ -73,22 +75,25 @@ const Menu = ({ loggedInUser }) => {
                         ) : (
                             <>
                                 <li className="nav-item">
-                                    <span className="nav-link user-welcome">
-                                        <i className="fas fa-user me-1"></i> Welcome, {loggedInUser.username}
-                                    </span>
+                  <span className="nav-link user-welcome">
+                    <i className="fas fa-user me-1"></i>
+                    Welcome, {user.username}
+                  </span>
                                 </li>
                                 <li className="nav-item">
-                                    <Link className="nav-link logout-link" to="/logout">
+                                    <button
+                                        className="nav-link btn btn-link logout-link"
+                                        onClick={logout}
+                                    >
                                         <i className="fas fa-sign-out-alt me-1"></i> Logout
-                                    </Link>
+                                    </button>
                                 </li>
                             </>
                         )}
                     </ul>
                 </div>
             </div>
-
-            <style jsx>{`
+            <style>{`
                 .navbar {
                     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
                     padding: 0.75rem 1rem;

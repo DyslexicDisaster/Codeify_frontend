@@ -63,7 +63,7 @@ const Footer = () => {
                 <p>&copy; {currentYear} Codeify. All rights reserved.</p>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .footer {
                     background: linear-gradient(180deg, var(--dark-bg) 0%, #1a1a1a 100%);
                     color: #f8f8f8;

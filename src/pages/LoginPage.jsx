@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { useAuth } from '../context/AuthContext';
+import { GOOGLE_AUTH_URL } from '../constants';
 import { loginUser } from '../services/userService';
 import Cookies from 'js-cookie';
 
-const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
-    const [formData, setFormData] = useState({ username: '', password: '' });
-    const [errorMessage, setErrorMessage] = useState('');
-    const [infoMessage, setInfoMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+export default function LoginPage() {
+    const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    const [formData, setFormData] = useState({ username: '', password: '' });
+    const [errorMessage, setErrorMessage] = useState('');
+    const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (location.state?.message) {
@@ -21,7 +25,7 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
         setErrorMessage('');
     };
 
@@ -30,20 +34,14 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
         setIsLoading(true);
         try {
             const response = await loginUser(formData.username, formData.password);
-            console.log("Login response:", response);
-
-            if (response.message === "Login successful" && response.token) {
-                Cookies.set('jwtToken', response.token, { expires: 1, secure: false, sameSite: 'Lax' });
-                setLoggedInUser({
-                    username: response.username,
-                    role: response.role,
-                });
-                navigate('/questions');
+            if (response.message === 'Login successful' && response.token) {
+                Cookies.set('jwtToken', response.token, { expires: 1, sameSite: 'Lax' });
+                login(response.token);
+                navigate('/questions', { replace: true });
             } else {
                 setErrorMessage(response.message || 'Login failed');
             }
         } catch (error) {
-            console.error('Login error:', error);
             setErrorMessage(error.response?.data || 'An error occurred during login');
         } finally {
             setIsLoading(false);
@@ -51,115 +49,72 @@ const LoginPage = ({ loggedInUser, setLoggedInUser }) => {
     };
 
     return (
-        <Layout loggedInUser={loggedInUser}>
+        <Layout>
             <div className="container mt-5 main-content">
                 <div className="row justify-content-center">
                     <div className="col-md-6">
                         {infoMessage && (
-                            <div className="alert alert-info fade-in-up mb-4" role="alert">
-                                <i className="fas fa-info-circle me-2"></i>
+                            <div className="alert alert-info mb-4" role="alert">
                                 {infoMessage}
                             </div>
                         )}
-                        <div className="card shadow fade-in">
-                            <div className="card-header bg-transparent">
-                                <h3 className="text-center mb-0">Login to Codeify</h3>
+                        {errorMessage && (
+                            <div className="alert alert-danger" role="alert">
+                                {errorMessage}
+                            </div>
+                        )}
+                        <div className="card shadow">
+                            <div className="card-header bg-transparent text-center">
+                                <h3 className="mb-0">Login to Codeify</h3>
                             </div>
                             <div className="card-body p-4">
-                                {errorMessage && (
-                                    <div className="alert alert-danger" role="alert">
-                                        {typeof errorMessage === 'object' ? errorMessage.message : errorMessage}
-                                    </div>
-                                )}
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-3">
                                         <label htmlFor="username" className="form-label">Username</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text bg-transparent">
-                                                <i className="fas fa-user"></i>
-                                            </span>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="username"
-                                                name="username"
-                                                placeholder="Enter your username"
-                                                required
-                                                autoFocus
-                                                value={formData.username}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
+                                        <input
+                                            type="text"
+                                            id="username"
+                                            name="username"
+                                            className="form-control"
+                                            placeholder="Enter your username"
+                                            required
+                                            autoFocus
+                                            value={formData.username}
+                                            onChange={handleChange}
+                                        />
                                     </div>
                                     <div className="mb-4">
                                         <label htmlFor="password" className="form-label">Password</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text bg-transparent">
-                                                <i className="fas fa-lock"></i>
-                                            </span>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                id="password"
-                                                name="password"
-                                                placeholder="Enter your password"
-                                                required
-                                                value={formData.password}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
+                                        <input
+                                            type="password"
+                                            id="password"
+                                            name="password"
+                                            className="form-control"
+                                            placeholder="Enter your password"
+                                            required
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
                                     </div>
                                     <div className="d-grid">
-                                        <button type="submit" className="btn btn-accent" disabled={isLoading}>
-                                            {isLoading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Logging in...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="fas fa-sign-in-alt me-2"></i>
-                                                    Login
-                                                </>
-                                            )}
+                                        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
+                                            {isLoading ? 'Logging in...' : 'Login'}
                                         </button>
                                     </div>
                                 </form>
                             </div>
                             <div className="card-footer bg-transparent text-center p-3">
                                 <p className="mb-0">
+                                    Or sign in with <a href={GOOGLE_AUTH_URL} className="btn btn-outline-danger btn-sm ms-2">Google</a>
+                                </p>
+                                <p className="mt-2 mb-0">
                                     Don't have an account? <Link to="/register">Register here</Link>
                                 </p>
-                            </div>
-                            <div className="social-logins mt-4 text-center">
-                                <p className="text-muted">or sign in with</p>
-                                <div className="d-flex justify-content-center gap-3">
-                                    <a href="http://localhost:8080/oauth2/authorization/google" className="btn btn-outline-danger">
-                                        <i className="fab fa-google me-1"></i> Google
-                                    </a>
-                                    <a href="http://localhost:8080/oauth2/authorization/github" className="btn btn-outline-dark">
-                                        <i className="fab fa-github me-1"></i> GitHub
-                                    </a>
-                                    <a href="http://localhost:8080/oauth2/authorization/microsoft" className="btn btn-outline-primary">
-                                        <i className="fab fa-microsoft me-1"></i> Microsoft
-                                    </a>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <style jsx>{`
-                /* Add your styles here */
-                .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                .fade-in-up { animation: fadeInUp 0.5s ease-in-out forwards; }
-                @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                .card { border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 1px solid #333; }
-            `}</style>
         </Layout>
     );
-};
-
-export default LoginPage;
+}
