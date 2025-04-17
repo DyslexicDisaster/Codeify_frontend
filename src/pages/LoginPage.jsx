@@ -7,7 +7,7 @@ import { loginUser } from '../services/userService';
 import Cookies from 'js-cookie';
 
 export default function LoginPage() {
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -17,32 +17,32 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        if (location.state?.message) {
-            setInfoMessage(location.state.message);
-            window.history.replaceState({}, document.title);
+        if (user) {
+            navigate('/', { replace: true });
         }
-    }, [location]);
+    }, [user, navigate]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+    const handleChange = e => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         setErrorMessage('');
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault();
         setIsLoading(true);
         try {
             const response = await loginUser(formData.username, formData.password);
             if (response.message === 'Login successful' && response.token) {
+                // store cookie + context
                 Cookies.set('jwtToken', response.token, { expires: 1, sameSite: 'Lax' });
                 login(response.token);
-                navigate('/questions', { replace: true });
+                // send them to Home
+                navigate('/', { replace: true });
             } else {
                 setErrorMessage(response.message || 'Login failed');
             }
-        } catch (error) {
-            setErrorMessage(error.response?.data || 'An error occurred during login');
+        } catch (err) {
+            setErrorMessage(err.response?.data || 'An error occurred during login');
         } finally {
             setIsLoading(false);
         }
