@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import axios from 'axios';
 
-// API base URL
 const API_URL = 'http://localhost:8080/admin';
 
 const AdminPage = ({ loggedInUser }) => {
@@ -13,7 +12,6 @@ const AdminPage = ({ loggedInUser }) => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // User state
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [userFormData, setUserFormData] = useState({
@@ -26,7 +24,6 @@ const AdminPage = ({ loggedInUser }) => {
     });
     const [isEditingUser, setIsEditingUser] = useState(false);
 
-    // Question state
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [questionFormData, setQuestionFormData] = useState({
@@ -44,7 +41,6 @@ const AdminPage = ({ loggedInUser }) => {
     const [programmingLanguages, setProgrammingLanguages] = useState([]);
 
     useEffect(() => {
-        // Redirect if not logged in as admin
         if (!loggedInUser) {
             navigate('/login', {
                 state: { message: 'Please login to access the admin panel.' }

@@ -40,20 +40,17 @@ const CodeEditorPage = () => {
                 const q = await getQuestionById(questionId);
                 setQuestion(q);
 
-                // load starter or previous code
                 let initial = q.starterCode ?? '';
                 setLoadingLastAttempt(true);
                 try {
                     const last = await getLastAttempt(questionId);
                     if (last) initial = last;
                 } catch {
-                    /* no previous attempt */
                 } finally {
                     setLoadingLastAttempt(false);
                 }
                 setCode(initial);
 
-                // pick the right CodeMirror mode
                 const lang = q.programmingLanguage?.name.toLowerCase();
                 if (lang === 'java') setLanguageExtension(java);
                 else if (lang === 'mysql') setLanguageExtension(sql);
@@ -125,7 +122,6 @@ const CodeEditorPage = () => {
         return '';
     };
 
-    // Loading / error states
     if (loading) {
         return (
             <Layout loggedInUser={user}>
@@ -159,7 +155,6 @@ const CodeEditorPage = () => {
         );
     }
 
-    // Main UI
     return (
         <Layout loggedInUser={user}>
             <header className="question-header">
@@ -206,7 +201,7 @@ const CodeEditorPage = () => {
                             Output{' '}
                             {runSuccess !== null && (
                                 <span className={`output-status ${runSuccess ? 'success' : 'error'}`}>
-                  {runSuccess ? '✔️' : '❌'}
+                  {runSuccess ? 'ok' : 'not ok'}
                 </span>
                             )}
                         </h5>
@@ -217,7 +212,7 @@ const CodeEditorPage = () => {
                 </div>
             </main>
 
-            <style jsx>{`
+            <style>{`
 
                 @keyframes fadeIn {
                     from { opacity: 0; }

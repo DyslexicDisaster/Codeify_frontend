@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ACCESS_TOKEN } from '../constants'; // Now properly imported
+import { ACCESS_TOKEN } from '../constants';
 
 const OAuth2Success = () => {
     const navigate = useNavigate();

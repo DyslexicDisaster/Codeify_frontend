@@ -1,29 +1,71 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import React, {
+    createContext, useContext,
+    useState, useCallback, useEffect
+} from 'react';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(() => {
         const token = localStorage.getItem('jwtToken');
-        return token ? { token } : null;
+        return token ? { token, loading: true } : null;
     });
 
-    const login = useCallback(async token => {
-        localStorage.setItem('jwtToken', token);
+    const loadProfile = async (token) => {
         try {
             const res = await fetch('http://localhost:8080/api/auth/me', {
-                headers: { Authorization: `Bearer ${token}` },
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            const profile = await res.json();
-            setUser({ token, username: profile.username, role: profile.role });
-        } catch {
-            // fallback: decode token or set minimal user
-            const { sub: email } = jwtDecode(token);
-            setUser({ token, username: email, role: 'user' });
+
+            if (!res.ok) {
+                console.warn('[AuthContext] /me returned', res.status);
+                return null;
+            }
+            return await res.json();
+        } catch (e) {
+            console.error('[AuthContext] loadProfile error', e);
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        if (user?.token && user.loading) {
+            (async () => {
+                const profile = await loadProfile(user.token);
+                if (profile?.username) {
+                    setUser({
+                        token: user.token,
+                        username: profile.username,
+                        role: profile.role,
+                        loading: false
+                    });
+                } else {
+                    setUser({ token: user.token, loading: false });
+                }
+            })();
+        }
+    }, [user]);
+
+    const login = useCallback(async (token) => {
+        localStorage.setItem('jwtToken', token);
+        setUser({ token, loading: true });
+        const profile = await loadProfile(token);
+        if (profile?.username) {
+            setUser({
+                token,
+                username: profile.username,
+                role: profile.role,
+                loading: false
+            });
+        } else {
+            setUser({ token, loading: false });
         }
     }, []);
-
 
     const logout = useCallback(() => {
         localStorage.removeItem('jwtToken');
@@ -37,8 +79,8 @@ export function AuthProvider({ children }) {
     );
 }
 
-export const useAuth = () => {
+export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth must be inside AuthProvider");
+    if (!ctx) throw new Error('useAuth must be inside AuthProvider');
     return ctx;
-};
+}

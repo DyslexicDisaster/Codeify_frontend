@@ -7,111 +7,110 @@ import { loginUser } from '../services/userService';
 import Cookies from 'js-cookie';
 
 export default function LoginPage() {
-    const { login, user } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const { login }    = useAuth();
+    const navigate     = useNavigate();
+    const location     = useLocation();
+    const infoMessage  = location.state?.message;
+    const [form, setForm]       = useState({ username: '', password: '' });
+    const [error, setError]     = useState('');
+    const [isLoading, setLoading] = useState(false);
 
-    const [formData, setFormData] = useState({ username: '', password: '' });
-    const [errorMessage, setErrorMessage] = useState('');
-    const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
-    const [isLoading, setIsLoading] = useState(false);
+    console.log('[LoginPage] render, user form=', form, 'infoMessage=', infoMessage);
 
     useEffect(() => {
-        if (user) {
-            navigate('/', { replace: true });
+        if (infoMessage) {
+            console.log('[LoginPage] clearing location.state.message');
+            window.history.replaceState({}, document.title);
         }
-    }, [user, navigate]);
+    }, [infoMessage]);
 
     const handleChange = e => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-        setErrorMessage('');
+        setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+        setError('');
     };
 
     const handleSubmit = async e => {
         e.preventDefault();
-        setIsLoading(true);
+        console.log('[LoginPage] handleSubmit, form=', form);
+        setLoading(true);
+
         try {
-            const response = await loginUser(formData.username, formData.password);
-            if (response.message === 'Login successful' && response.token) {
-                // store cookie + context
-                Cookies.set('jwtToken', response.token, { expires: 1, sameSite: 'Lax' });
-                login(response.token);
-                // send them to Home
+            const { message, token } = await loginUser(form.username, form.password);
+            console.log('[LoginPage] loginUser response=', { message, token });
+
+            if (message === 'Login successful' && token) {
+                console.log('[LoginPage] setting JWT cookie');
+                Cookies.set('jwtToken', token, { expires: 1, sameSite: 'Lax' });
+
+                console.log('[LoginPage] calling context.login(token) and awaiting it');
+                await login(token);
+
+                console.log('[LoginPage] navigate to home');
                 navigate('/', { replace: true });
             } else {
-                setErrorMessage(response.message || 'Login failed');
+                console.warn('[LoginPage] login failed:', message);
+                setError(message || 'Login failed');
             }
         } catch (err) {
-            setErrorMessage(err.response?.data || 'An error occurred during login');
+            console.error('[LoginPage] error during login:', err);
+            setError(err.message || 'An error occurred during login');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     return (
         <Layout>
-            <div className="container mt-5 main-content">
-                <div className="row justify-content-center">
-                    <div className="col-md-6">
-                        {infoMessage && (
-                            <div className="alert alert-info mb-4" role="alert">
-                                {infoMessage}
+            <div className="container mt-5" style={{ maxWidth: 400 }}>
+                {infoMessage && <div className="alert alert-info">{infoMessage}</div>}
+                {error       && <div className="alert alert-danger">{error}</div>}
+
+                <div className="card shadow">
+                    <div className="card-body">
+                        <h4 className="text-center mb-4">Login to Codeify</h4>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label>Username</label>
+                                <input
+                                    name="username"
+                                    className="form-control"
+                                    value={form.username}
+                                    onChange={handleChange}
+                                    required
+                                    autoFocus
+                                />
                             </div>
-                        )}
-                        {errorMessage && (
-                            <div className="alert alert-danger" role="alert">
-                                {errorMessage}
+                            <div className="mb-4">
+                                <label>Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="form-control"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    required
+                                />
                             </div>
-                        )}
-                        <div className="card shadow">
-                            <div className="card-header bg-transparent text-center">
-                                <h3 className="mb-0">Login to Codeify</h3>
-                            </div>
-                            <div className="card-body p-4">
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label htmlFor="username" className="form-label">Username</label>
-                                        <input
-                                            type="text"
-                                            id="username"
-                                            name="username"
-                                            className="form-control"
-                                            placeholder="Enter your username"
-                                            required
-                                            autoFocus
-                                            value={formData.username}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="mb-4">
-                                        <label htmlFor="password" className="form-label">Password</label>
-                                        <input
-                                            type="password"
-                                            id="password"
-                                            name="password"
-                                            className="form-control"
-                                            placeholder="Enter your password"
-                                            required
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="d-grid">
-                                        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
-                                            {isLoading ? 'Logging in...' : 'Login'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div className="card-footer bg-transparent text-center p-3">
-                                <p className="mb-0">
-                                    Or sign in with <a href={GOOGLE_AUTH_URL} className="btn btn-outline-danger btn-sm ms-2">Google</a>
-                                </p>
-                                <p className="mt-2 mb-0">
-                                    Don't have an account? <Link to="/register">Register here</Link>
-                                </p>
-                            </div>
+                            <button
+                                className="btn btn-accent w-100"
+                                type="submit"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Logging in…' : 'Login'}
+                            </button>
+                        </form>
+                        <hr />
+                        <div className="text-center">
+                            <a
+                                className="btn btn-outline-danger"
+                                href={GOOGLE_AUTH_URL}
+                            >
+                                Sign in with Google
+                            </a>
                         </div>
+                    </div>
+                    <div className="card-footer text-center">
+                        Don’t have an account? <Link to="/register">Register here</Link>
                     </div>
                 </div>
             </div>

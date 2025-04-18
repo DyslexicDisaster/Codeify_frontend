@@ -1,4 +1,3 @@
-// src/pages/OAuthRedirect.jsx
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +12,6 @@ const OAuthRedirect = () => {
         const token = params.get('token');
 
         if (token) {
-            // Check if we already have this token to prevent loops
             const currentToken = localStorage.getItem('jwtToken');
             if (currentToken !== token) {
                 login(token);

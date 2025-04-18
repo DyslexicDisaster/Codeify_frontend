@@ -8,7 +8,6 @@ const GradePage = ({ loggedInUser }) => {
     const { grade, feedback, message, status, passed, questionId, languageId } = location.state || {};
 
     useEffect(() => {
-        // Redirect if no grade data is available
         if (!grade && !feedback) {
             navigate('/questions');
         }
@@ -141,7 +140,7 @@ const GradePage = ({ loggedInUser }) => {
                 </div>
             </main>
 
-            <style jsx>{`
+            <style>{`
                 .main-content {
                     min-height: calc(100vh - 150px);
                     padding: 2rem 0;

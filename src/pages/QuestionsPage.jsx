@@ -1,4 +1,3 @@
-// src/pages/QuestionsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -27,13 +26,11 @@ export default function QuestionsPage() {
     const [error, setError] = useState('');
     const [activeIndex, setActiveIndex] = useState(null);
 
-    // parse ?languageId=...
     const languageIdFromQuery = (() => {
         const p = new URLSearchParams(search).get('languageId');
         return p ? +p : null;
     })();
 
-    // 1) guard: if not logged in, redirect
     useEffect(() => {
         if (!user) {
             navigate('/login', {
@@ -42,7 +39,6 @@ export default function QuestionsPage() {
         }
     }, [user, navigate]);
 
-    // 2) fetch languages
     useEffect(() => {
         if (!user) return;
 
@@ -50,7 +46,6 @@ export default function QuestionsPage() {
         getProgrammingLanguages()
             .then(data => {
                 setLanguages(data);
-                // pick by query or default to first
                 const pick =
                     data.find(l => l.id === languageIdFromQuery) ||
                     data[0] ||
@@ -63,7 +58,6 @@ export default function QuestionsPage() {
             .finally(() => setLoading(false));
     }, [user, languageIdFromQuery]);
 
-    // 3) fetch questions + progress when language changes
     useEffect(() => {
         if (!user || !selectedLanguage) return;
 
@@ -76,11 +70,9 @@ export default function QuestionsPage() {
                 try {
                     prog = await getUserProgress(selectedLanguage.id);
                 } catch {
-                    // silently ignore progress fetch failure
                 }
                 setProgressData(prog);
 
-                // build a quick map
                 const map = {};
                 (prog.progressDetails || []).forEach(p => {
                     if (p.question?.id != null) {
@@ -101,7 +93,6 @@ export default function QuestionsPage() {
             .finally(() => setLoading(false));
     }, [user, selectedLanguage]);
 
-    // handlers
     const handleLanguageChange = e => {
         const id = +e.target.value;
         const lang = languages.find(l => l.id === id);
@@ -113,7 +104,6 @@ export default function QuestionsPage() {
         setActiveIndex(activeIndex === idx ? null : idx);
     };
 
-    // small helpers
     const getDifficultyClass = d =>
         d === 'EASY'
             ? 'bg-success'

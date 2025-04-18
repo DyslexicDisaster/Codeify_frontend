@@ -3,10 +3,9 @@ import Cookies from 'js-cookie';
 
 const axiosClient = axios.create({
     baseURL: 'http://localhost:8080',
-    withCredentials: true, // Ensure cookies are sent with every request
+    withCredentials: true,
 });
 
-// Interceptor to add JWT token to every request
 axiosClient.interceptors.request.use((config) => {
     const token = Cookies.get('jwtToken');
     if (token) {
@@ -17,7 +16,6 @@ axiosClient.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Improved Response Interceptor
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
