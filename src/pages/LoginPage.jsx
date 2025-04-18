@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
-import { GOOGLE_AUTH_URL } from '../constants';
+import { GOOGLE_AUTH_URL, MICROSOFT_AUTH_URL } from '../constants';
 import { loginUser } from '../services/userService';
 import Cookies from 'js-cookie';
 
@@ -106,6 +106,9 @@ export default function LoginPage() {
                                 href={GOOGLE_AUTH_URL}
                             >
                                 Sign in with Google
+                            </a>
+                            <a className="btn btn-outline-primary" href={MICROSOFT_AUTH_URL}>
+                                Sign in with Microsoft
                             </a>
                         </div>
                     </div>
