@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { registerUser } from '../services/userService';
 
+/**
+ * RESOURCES
+ * https://www.w3schools.com/js/js_validation.asp
+ * https://getbootstrap.com/docs/5.3/forms/validation/
+ * https://legacy.reactjs.org/docs/forms.html
+ *
+ */
+
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
         username: '',
@@ -177,7 +185,7 @@ const RegisterPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <small className="text-muted">
+                                        <small className="text-success">
                                             Password must contain at least 8 characters, one uppercase letter,
                                             one lowercase letter, one number, and one special character.
                                         </small>
@@ -206,7 +214,7 @@ const RegisterPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <small className="text-muted">Must be the same as the password above.</small>
+                                        <small className="text-success">Must be the same as the password above.</small>
                                     </div>
 
                                     <div className="d-grid mb-3">
