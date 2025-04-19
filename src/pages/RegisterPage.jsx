@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { registerUser } from '../services/userService';
 
-const RegisterPage = ({ loggedInUser }) => {
+const RegisterPage = () => {
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -47,20 +47,16 @@ const RegisterPage = ({ loggedInUser }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
         setIsLoading(true);
         try {
             const response = await registerUser(formData.username, formData.password, formData.email);
-            console.log("Register response:", response);
-
             if (response === "User registered successfully") {
-                navigate('/login', {
-                    state: { message: 'Registration successful! Please login with your new account.' }
-                });
+                navigate('/login', { state: { message: 'Registration successful! Please login with your new account.' } });
             } else {
                 setErrorMessage(response || 'Registration failed');
             }
         } catch (error) {
-            console.error('Registration error:', error);
             setErrorMessage(error.message || 'An error occurred during registration');
         } finally {
             setIsLoading(false);
@@ -68,8 +64,8 @@ const RegisterPage = ({ loggedInUser }) => {
     };
 
     return (
-        <Layout loggedInUser={loggedInUser}>
-            <div className="container mt-5 main-content">
+        <Layout>
+            <div className="container mt-5 main-content mb-5">
                 <div className="row justify-content-center">
                     <div className="col-md-6">
                         <div className="card shadow fade-in">
@@ -86,9 +82,7 @@ const RegisterPage = ({ loggedInUser }) => {
                                     <div className="mb-3">
                                         <label htmlFor="username" className="form-label">Username</label>
                                         <div className="input-group">
-                                            <span className="input-group-text">
-                                                <i className="fas fa-user"></i>
-                                            </span>
+                                            <span className="input-group-text"><i className="fas fa-user"></i></span>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -105,9 +99,7 @@ const RegisterPage = ({ loggedInUser }) => {
                                     <div className="mb-3">
                                         <label htmlFor="email" className="form-label">Email</label>
                                         <div className="input-group">
-                                            <span className="input-group-text">
-                                                <i className="fas fa-envelope"></i>
-                                            </span>
+                                            <span className="input-group-text"><i className="fas fa-envelope"></i></span>
                                             <input
                                                 type="email"
                                                 className="form-control"
@@ -123,9 +115,7 @@ const RegisterPage = ({ loggedInUser }) => {
                                     <div className="mb-3">
                                         <label htmlFor="password" className="form-label">Password</label>
                                         <div className="input-group">
-                                            <span className="input-group-text">
-                                                <i className="fas fa-lock"></i>
-                                            </span>
+                                            <span className="input-group-text"><i className="fas fa-lock"></i></span>
                                             <input
                                                 type="password"
                                                 className="form-control"
@@ -145,9 +135,7 @@ const RegisterPage = ({ loggedInUser }) => {
                                     <div className="mb-4">
                                         <label htmlFor="repeatPassword" className="form-label">Repeat Password</label>
                                         <div className="input-group">
-                                            <span className="input-group-text">
-                                                <i className="fas fa-lock"></i>
-                                            </span>
+                                            <span className="input-group-text"><i className="fas fa-lock"></i></span>
                                             <input
                                                 type="password"
                                                 className="form-control"
@@ -159,33 +147,28 @@ const RegisterPage = ({ loggedInUser }) => {
                                                 onChange={handleChange}
                                             />
                                         </div>
-                                        <small className="text-muted">
-                                            Must be the same as the password above.
-                                        </small>
+                                        <small className="text-muted">Must be the same as the password above.</small>
                                     </div>
-                                    <div className="d-grid">
+
+                                    <div className="d-grid mb-3">
                                         <button
                                             type="submit"
                                             className="btn btn-accent"
                                             disabled={isLoading}
                                         >
-                                            {isLoading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Registering...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="fas fa-user-plus me-2"></i>
-                                                    Register
-                                                </>
-                                            )}
+                                            {isLoading
+                                                ? <><span className="spinner-border spinner-border-sm me-2" role="status" />Registering...</>
+                                                : <><i className="fas fa-user-plus me-2"></i>Register</>
+                                            }
                                         </button>
                                     </div>
                                 </form>
                                 <div className="text-center mt-4">
-                                    <p className="mb-0">
+                                    <p className="mb-1">
                                         Already have an account? <Link to="/login">Login here</Link>
+                                    </p>
+                                    <p className="mb-0">
+                                        <Link to="/forgot-password" className="text-accent">Forgot your password?</Link>
                                     </p>
                                 </div>
                             </div>
@@ -195,79 +178,17 @@ const RegisterPage = ({ loggedInUser }) => {
             </div>
 
             <style>{`
-                .fade-in {
-                    animation: fadeIn 0.5s ease-in-out forwards;
-                }
-                
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                .main-content {
-                    min-height: calc(100vh - 250px);
-                }
-                
-                .card {
-                    border-radius: 15px;
-                    overflow: hidden;
-                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-                    border: 1px solid #333;
-                }
-                
-                .form-control, .input-group-text {
-                    border-radius: 8px;
-                    padding: 10px 15px;
-                }
-                
-                .input-group .form-control {
-                    border-top-left-radius: 0;
-                    border-bottom-left-radius: 0;
-                }
-                
-                .input-group-text {
-                    border-top-right-radius: 0;
-                    border-bottom-right-radius: 0;
-                    background-color: var(--dark-secondary);
-                    border-color: #444;
-                    color: var(--accent);
-                    min-width: 45px;
-                    display: flex;
-                    justify-content: center;
-                }
-                
-                .btn-accent {
-                    background-color: var(--accent);
-                    color: var(--dark-bg);
-                    font-weight: 600;
-                    padding: 10px;
-                    border-radius: 8px;
-                    transition: all 0.3s ease;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }
-                
-                .btn-accent:hover:not(:disabled) {
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
-                    background-color: #00cc6a;
-                }
-                
-                small {
-                    display: block;
-                    margin-top: 5px;
-                    font-size: 0.8rem;
-                }
-                
-                .text-muted {
-                    color: #aaa !important;
-                }
+                .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .main-content { min-height: calc(100vh - 250px); margin-bottom: 4rem; }
+                .card { border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 1px solid #333; }
+                .form-control, .input-group-text { border-radius: 8px; padding: 10px 15px; }
+                .input-group .form-control { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+                .input-group-text { border-top-right-radius: 0; border-bottom-right-radius: 0; background-color: var(--dark-secondary); border-color: #444; color: var(--accent); min-width: 45px; display: flex; justify-content: center; }
+                .btn-accent { background-color: var(--accent); color: var(--dark-bg); font-weight: 600; padding: 10px; border-radius: 8px; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+                .btn-accent:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,136,0.3); background-color: #00cc6a; }
+                small { display: block; margin-top: 5px; font-size: 0.8rem; }
+                .text-muted { color: #aaa !important; }
             `}</style>
         </Layout>
     );

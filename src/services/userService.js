@@ -1,4 +1,3 @@
-
 import axiosClient from "./axiosClient";
 
 const API_URL_USER = 'http://localhost:8080/api/auth';
@@ -72,4 +71,32 @@ export const logoutUser = async () => {
         console.error('Error logging out user:', error);
         throw error;
     }
+};
+
+export const forgotPassword = async (email) => {
+    console.debug('[userService] forgotPassword → POST /forgot-password', email);
+    try {
+        const res = await axiosClient.post(
+            '/api/auth/forgot-password',
+            new URLSearchParams({ email })
+        );
+        console.debug('[userService] ←', res.status, res.data);
+        return res.data;
+    } catch (err) {
+        console.error('[userService] ERROR', err.response?.status, err.response?.data);
+        throw new Error(err.response?.data || err.message);
+    }
+};
+
+export const resetPassword = async (token, newPassword) => {
+    console.debug("[userService] POST /api/auth/reset-password", { token, newPassword });
+
+    const res = await axiosClient.post(
+        "/api/auth/reset-password",
+        new URLSearchParams({ token, newPassword }),
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    console.debug("[userService] ←", res.status, res.data);
+    return res.data;
 };
