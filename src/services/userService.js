@@ -78,3 +78,31 @@ export const getUserProfile = async () => {
     const response = await axiosClient.get('/api/user/profile');
     return response.data;
 };
+
+export const forgotPassword = async (email) => {
+    console.debug('[userService] forgotPassword → POST /forgot-password', email);
+    try {
+        const res = await axiosClient.post(
+            '/api/auth/forgot-password',
+            new URLSearchParams({ email })
+        );
+        console.debug('[userService] ←', res.status, res.data);
+        return res.data;
+    } catch (err) {
+        console.error('[userService] ERROR', err.response?.status, err.response?.data);
+        throw new Error(err.response?.data || err.message);
+    }
+};
+
+export const resetPassword = async (token, newPassword) => {
+    console.debug("[userService] POST /api/auth/reset-password", { token, newPassword });
+
+    const res = await axiosClient.post(
+        "/api/auth/reset-password",
+        new URLSearchParams({ token, newPassword }),
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    console.debug("[userService] ←", res.status, res.data);
+    return res.data;
+};
