@@ -1,63 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-// Import pages
-import HomePage from './pages/HomePage';
-import QuestionsPage from './pages/QuestionsPage';
-import CodeEditorPage from './pages/CodeEditorPage';
-import LoginPage from './pages/LoginPage';
-import LoginFailedPage from './pages/LoginFailedPage';
-import RegisterPage from './pages/RegisterPage';
-import LogoutPage from "./pages/LogoutPage";
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider }     from './context/AuthContext';
+import PublicRoute          from './components/PublicRoute';
+import PrivateRoute         from './components/PrivateRoute';
+import AdminRoute           from './components/AdminRoute';
+import HomePage             from './pages/HomePage';
+import LoginPage            from './pages/LoginPage';
+import RegisterPage         from './pages/RegisterPage';
+import OAuth2RedirectHandler from './oauth2/OAuth2RedirectHandler';
+import QuestionsPage        from './pages/QuestionsPage';
+import CodeEditorPage       from './pages/CodeEditorPage';
+import GradePage            from './pages/GradePage';
+import LogoutPage           from './pages/LogoutPage';
+import AdminPage            from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
 
-// Import Bootstrap JS
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import GradePage from "./pages/GradePage";
-import AdminRoute from "./components/AdminRoute";
-import AdminPage from "./pages/AdminPage";
-import OAuth2Success from "./pages/OAuth2Success";
-
-const App = () => {
-  const [loggedInUser, setLoggedInUser] = useState(null);
-
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const user = localStorage.getItem('user');
-      if (user) {
-        setLoggedInUser(JSON.parse(user));
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
-
-  return (
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage loggedInUser={loggedInUser} />} />
-          <Route path="/questions" element={<QuestionsPage loggedInUser={loggedInUser} />} />
-          <Route path="/questions/:questionId/attempt" element={<CodeEditorPage loggedInUser={loggedInUser} />} />
-          <Route path="/codeEditor" element={<CodeEditorPage loggedInUser={loggedInUser} />} />
-          <Route path="/login" element={<LoginPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />}/>
-          <Route path="/login-failed" element={<LoginFailedPage loggedInUser={loggedInUser} />} />
-          <Route path="/register" element={<RegisterPage loggedInUser={loggedInUser} />} />
-          <Route path="/logout" element={<LogoutPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />} />
-          <Route path="/grade" element={<GradePage loggedInUser={loggedInUser} />} />
-          <Route path="/oauth2-success" element={<OAuth2Success />} />
-            <Route path="/profile" element={<ProfilePage loggedInUser={loggedInUser} />} />           {/* Admin route */}          
-          <Route
-              path="/admin"
-              element={
-                <AdminRoute
-                    element={<AdminPage loggedInUser={loggedInUser} />}
-                    loggedInUser={loggedInUser}
-                />
-              }
-          />
-        </Routes>
-      </Router>
-  );
-};
-
-export default App;
+export default function App() {
+    return (
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/login" element={<PublicRoute><LoginPage/></PublicRoute>} />
+                    <Route path="/register" element={<PublicRoute><RegisterPage/></PublicRoute>} />
+                    <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>} />
+                    <Route path="/" element={<HomePage/>} />
+                    <Route path="/questions" element={<PrivateRoute><QuestionsPage/></PrivateRoute>} />
+                    <Route path="/questions/:questionId/attempt" element={<PrivateRoute><CodeEditorPage/></PrivateRoute>} />
+                    <Route path="/grade" element={<PrivateRoute><GradePage/></PrivateRoute>} />
+                    <Route path="/logout" element={<PrivateRoute><LogoutPage/></PrivateRoute>} />
+                    <Route path="/profile" element={<PrivateRoute><ProfilePage/></PrivateRoute>} />
+                    <Route path="/admin" element={
+                        <PrivateRoute>
+                            <AdminRoute><AdminPage/></AdminRoute>
+                        </PrivateRoute>
+                    }/>
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
+    );
+}

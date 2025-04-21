@@ -41,23 +41,20 @@ export const registerUser = async (username, password, email) => {
  */
 export const loginUser = async (username, password) => {
     try {
-        const response = await axiosClient.post('/api/auth/login', new URLSearchParams({
-            username,
-            password
-        }), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+        const response = await axiosClient.post(
+            '/api/auth/login',
+            new URLSearchParams({ username, password }),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }}
+        );
         console.log("Raw login response:", response.data);
-        if (response && response.data && typeof response.data === 'object') {
+
+        if (response.data && typeof response.data === 'object') {
             return response.data;
-        } else {
-            throw new Error('Unexpected response format');
         }
+        throw new Error('Unexpected response format');
     } catch (error) {
         console.error('Error logging in user:', error.message);
-        throw new Error(error.message);
+        throw error;
     }
 };
 

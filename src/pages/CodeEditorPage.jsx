@@ -7,11 +7,15 @@ import { javascript } from '@codemirror/lang-javascript';
 import { java } from '@codemirror/lang-java';
 import { sql } from '@codemirror/lang-sql';
 import { dracula } from '@uiw/codemirror-theme-dracula';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import axiosClient from '../services/axiosClient';  // Use custom axios client
 
-const CodeEditorPage = ({ loggedInUser }) => {
+const CodeEditorPage = () => {
+    const { user } = useAuth();
     const { questionId } = useParams();
     const navigate = useNavigate();
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [question, setQuestion] = useState(null);
@@ -24,98 +28,63 @@ const CodeEditorPage = ({ loggedInUser }) => {
     const [loadingLastAttempt, setLoadingLastAttempt] = useState(false);
 
     useEffect(() => {
-        if (!loggedInUser) {
-            navigate('/login', { state: { message: 'Please login to access the code editor.' } });
+        if (!user) {
+            navigate('/login', {
+                state: { message: 'Please login to access the code editor.' }
+            });
             return;
         }
 
-        const fetchQuestion = async () => {
+        async function fetchQuestion() {
             try {
                 setLoading(true);
-                const questionData = await getQuestionById(questionId);
-                setQuestion(questionData);
+                const q = await getQuestionById(questionId);
+                setQuestion(q);
 
-                if (questionData.starterCode) {
-                    const formattedCode = questionData.starterCode
-                        .split('\n')
-                        .map(line => line.trimStart())
-                        .join('\n');
-                    setCode(formattedCode);
-                }
-
-                if (questionData.programmingLanguage) {
-                    switch (questionData.programmingLanguage.name.toLowerCase()) {
-                        case 'java':
-                            setLanguageExtension(java);
-                            break;
-                        case 'mysql':
-                            setLanguageExtension(sql);
-                            break;
-                        case 'javascript':
-                        default:
-                            setLanguageExtension(javascript);
-                            break;
-                    }
-                }
-
-                // Attempt to fetch the user's last code submission
+                let initial = q.starterCode ?? '';
                 setLoadingLastAttempt(true);
                 try {
-                    const lastAttempt = await getLastAttempt(questionId);
-                    if (lastAttempt) {
-                        setCode(lastAttempt);
-                    }
-                } catch (err) {
-                    console.log("No previous attempt found, using starter code.");
+                    const last = await getLastAttempt(questionId);
+                    if (last) initial = last;
+                } catch {
+                } finally {
+                    setLoadingLastAttempt(false);
                 }
-                setLoadingLastAttempt(false);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching question:', err);
+                setCode(initial);
+
+                const lang = q.programmingLanguage?.name.toLowerCase();
+                if (lang === 'java') setLanguageExtension(java);
+                else if (lang === 'mysql') setLanguageExtension(sql);
+                else setLanguageExtension(javascript);
+
+            } catch (e) {
+                console.error(e);
                 setError('Failed to load question. Please try again later.');
+            } finally {
                 setLoading(false);
-                setLoadingLastAttempt(false);
             }
-        };
-
-        if (questionId) {
-            fetchQuestion();
-        } else {
-            navigate('/questions');
         }
-    }, [questionId, navigate, loggedInUser]);
 
-    const handleCodeChange = (value) => {
-        setCode(value);
-    };
+        if (questionId) fetchQuestion();
+        else navigate('/questions');
+
+    }, [questionId, navigate, user]);
+
+    const handleCodeChange = value => setCode(value);
 
     const handleRunCode = async () => {
         setIsRunning(true);
         setOutput('');
         setRunSuccess(null);
-
         try {
-            if (question?.programmingLanguage?.name) {
-                const language = question.programmingLanguage.name.toLowerCase();
-
-                // Use axiosClient so that credentials (JWT cookie) are sent automatically
-                const response = await axiosClient.post('/api/execute', { code, language });
-                const outputText = response.data.output || 'Code executed successfully with no output.';
-                setOutput(outputText);
-                setRunSuccess(!outputText.toLowerCase().includes('error'));
-            } else {
-                setOutput('Error: Cannot determine the programming language.');
-                setRunSuccess(false);
-            }
-        } catch (error) {
-            console.error('Error running code:', error);
-            let errorMessage = 'An error occurred while running the code.';
-            if (error.response) {
-                errorMessage = error.response.data || errorMessage;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            setOutput(`Error: ${errorMessage}`);
+            const lang = question.programmingLanguage.name.toLowerCase();
+            const resp = await axios.post('http://localhost:8080/api/execute', { code, language: lang });
+            const text = resp.data.output || 'Executed with no output.';
+            setOutput(text);
+            setRunSuccess(!/error/i.test(text));
+        } catch (e) {
+            console.error(e);
+            setOutput('Error running code: ' + (e.response?.data || e.message));
             setRunSuccess(false);
         } finally {
             setIsRunning(false);
@@ -123,77 +92,43 @@ const CodeEditorPage = ({ loggedInUser }) => {
     };
 
     const handleSubmitCode = async () => {
-        const userConfirmed = window.confirm("Are you sure you want to submit your code?");
-        if (!userConfirmed) return;
-
+        if (!window.confirm('Are you sure you want to submit?')) return;
         setIsSubmitting(true);
         setError(null);
-
         try {
-            const language = question?.programmingLanguage?.name?.toLowerCase();
-            if (!language) {
-                setOutput('Error: Programming language not specified.');
-                return;
-            }
-
-            const payload = { questionId, answer: code };
-
-            // Use axiosClient to send the payload (ensuring JWT is sent as a cookie)
-            const response = await axiosClient.post('/api/question/grade', payload, {
-                headers: { 'Content-Type': 'application/json' }
+            const result = await submitAnswer(questionId, code);
+            if (!result) throw new Error('Empty response');
+            navigate('/grade', {
+                state: {
+                    grade: result.grade,
+                    feedback: result.feedback,
+                    message: result.message,
+                    status: result.status,
+                    passed: result.grade >= 70,
+                }
             });
-
-            // If the grading is successful, navigate to the GradePage with the evaluation result
-            if (response && response.data) {
-                const gradeData = {
-                    grade: response.data.grade,
-                    feedback: response.data.feedback,
-                    message: response.data.message || "Your answer has been graded.",
-                    status: response.data.status || "UNKNOWN",
-                    passed: response.data.grade >= 70,
-                    questionId: parseInt(questionId),
-                    languageId: question.programmingLanguage?.id
-                };
-                navigate("/grade", { state: gradeData });
-            } else {
-                throw new Error("Received empty response from server");
-            }
-        } catch (error) {
-            console.error('Error submitting code:', error);
-            let errorMessage = 'An error occurred while submitting your code.';
-            if (error.response) {
-                errorMessage = error.response.data || errorMessage;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            setError(errorMessage);
-            setOutput(`Submission Error: ${errorMessage}`);
+        } catch (e) {
+            console.error(e);
+            setError(e.response?.data || e.message || 'Submission failed');
             setRunSuccess(false);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const getColorClass = (difficulty) => {
-        if (!difficulty) return '';
-        switch (difficulty) {
-            case 'EASY':   return 'difficulty-easy';
-            case 'MEDIUM': return 'difficulty-medium';
-            case 'HARD':   return 'difficulty-hard';
-            default:       return '';
-        }
+    const badgeClass = diff => {
+        if (diff === 'EASY') return 'difficulty-easy';
+        if (diff === 'MEDIUM') return 'difficulty-medium';
+        if (diff === 'HARD') return 'difficulty-hard';
+        return '';
     };
 
     if (loading) {
         return (
-            <Layout loggedInUser={loggedInUser}>
-                <div className="container mt-5 text-center main-content">
-                    <div className="loading-container">
-                        <div className="spinner-border text-accent" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3 loading-text">Loading question...</p>
-                    </div>
+            <Layout loggedInUser={user}>
+                <div className="container mt-5 text-center">
+                    <div className="spinner-border text-accent" role="status" />
+                    <p className="mt-3">Loading question…</p>
                 </div>
             </Layout>
         );
@@ -201,12 +136,9 @@ const CodeEditorPage = ({ loggedInUser }) => {
 
     if (error && !question) {
         return (
-            <Layout loggedInUser={loggedInUser}>
-                <div className="container mt-5 main-content">
-                    <div className="alert alert-danger fade-in" role="alert">
-                        <i className="fas fa-exclamation-circle me-2"></i>
-                        {error}
-                    </div>
+            <Layout loggedInUser={user}>
+                <div className="container mt-5">
+                    <div className="alert alert-danger">{error}</div>
                 </div>
             </Layout>
         );
@@ -214,11 +146,10 @@ const CodeEditorPage = ({ loggedInUser }) => {
 
     if (!question) {
         return (
-            <Layout loggedInUser={loggedInUser}>
-                <div className="container mt-5 main-content">
-                    <div className="alert alert-warning fade-in" role="alert">
-                        <i className="fas fa-question-circle me-2"></i>
-                        Question not found. <a href="/questions">Return to Questions</a>
+            <Layout loggedInUser={user}>
+                <div className="container mt-5">
+                    <div className="alert alert-warning">
+                        Question not found. <a href="/questions">Back to list</a>
                     </div>
                 </div>
             </Layout>
@@ -226,278 +157,106 @@ const CodeEditorPage = ({ loggedInUser }) => {
     }
 
     return (
-        <Layout loggedInUser={loggedInUser}>
-            <header className="question-header fade-in">
-                <div className="container">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 className="h3 mb-0">
-                                {question.title}
-                                <span className={`difficulty-badge ${getColorClass(question.difficulty)}`}>
-                                    {question.difficulty}
-                                </span>
-                            </h1>
-                        </div>
-                        <div className="d-flex">
-                            <button
-                                className="btn btn-accent me-2 run-btn"
-                                onClick={handleRunCode}
-                                disabled={isRunning || isSubmitting}
-                            >
-                                {isRunning ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Running...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-play me-2"></i>
-                                        Run Code
-                                    </>
-                                )}
-                            </button>
-                            <button
-                                className="btn btn-accent submit-btn"
-                                onClick={handleSubmitCode}
-                                disabled={isSubmitting || isRunning}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-paper-plane me-2"></i>
-                                        Submit
-                                    </>
-                                )}
-                            </button>
-                        </div>
+        <Layout loggedInUser={user}>
+            <header className="question-header">
+                <div className="container d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 className="h3">
+                            {question.title}{' '}
+                            <span className={`difficulty-badge ${badgeClass(question.difficulty)}`}>
+                {question.difficulty}
+              </span>
+                        </h1>
+                        {loadingLastAttempt && <small>Loading your last attempt…</small>}
+                    </div>
+                    <div>
+                        <button className="btn btn-accent me-2" onClick={handleRunCode} disabled={isRunning || isSubmitting}>
+                            {isRunning ? 'Running…' : 'Run Code'}
+                        </button>
+                        <button className="btn btn-accent" onClick={handleSubmitCode} disabled={isSubmitting || isRunning}>
+                            {isSubmitting ? 'Submitting…' : 'Submit'}
+                        </button>
                     </div>
                 </div>
             </header>
 
-            <main className="editor-container main-content">
+            <main className="editor-container">
                 <div className="container">
-                    <div className="row">
-                        <div className="col-md-12 mb-4">
-                            <div className="question-card slide-in-left">
-                                <h5 className="mb-3">
-                                    <i className="fas fa-info-circle me-2"></i>Description
-                                </h5>
-                                <p>{question.description}</p>
-                            </div>
+                    <section className="mb-4">
+                        <h5>Description</h5>
+                        <p>{question.description}</p>
+                    </section>
+
+                    <section className="mb-4">
+                        <CodeMirror
+                            value={code}
+                            height="400px"
+                            theme={dracula}
+                            extensions={[languageExtension]}
+                            onChange={handleCodeChange}
+                        />
+                    </section>
+
+                    <section>
+                        <h5>
+                            Output{' '}
+                            {runSuccess !== null && (
+                                <span className={`output-status ${runSuccess ? 'success' : 'error'}`}>
+                  {runSuccess ? 'ok' : 'not ok'}
+                </span>
+                            )}
+                        </h5>
+                        <div className="code-output">
+                            {output ? <pre>{output}</pre> : <em>Click “Run Code” to see results</em>}
                         </div>
-                        <div className="col-md-12 mb-4">
-                            <div className="editor-wrapper slide-in-right">
-                                <CodeMirror
-                                    value={code}
-                                    height="400px"
-                                    theme={dracula}
-                                    extensions={[languageExtension]}
-                                    onChange={handleCodeChange}
-                                    style={{ borderRadius: '10px', overflow: 'hidden' }}
-                                />
-                            </div>
-                        </div>
-                        <div className="col-md-12">
-                            <div className="question-card slide-in-bottom">
-                                <h5 className="mb-3">
-                                    <i className="fas fa-terminal me-2"></i>Output
-                                    {runSuccess !== null && (
-                                        <span className={`output-status ms-2 ${runSuccess ? 'success' : 'error'}`}>
-                                            <i className={`fas ${runSuccess ? 'fa-check-circle' : 'fa-times-circle'} me-1`}></i>
-                                            {runSuccess ? 'Success' : 'Error'}
-                                        </span>
-                                    )}
-                                </h5>
-                                <div className="code-output">
-                                    {isRunning ? (
-                                        <div className="text-center py-4">
-                                            <div className="spinner-border text-accent" role="status">
-                                                <span className="visually-hidden">Running...</span>
-                                            </div>
-                                            <p className="mt-2 mb-0">Executing your code...</p>
-                                        </div>
-                                    ) : output ? (
-                                        <pre className="output-text">{output}</pre>
-                                    ) : (
-                                        <div className="empty-output">
-                                            <i className="fas fa-code fa-2x mb-2"></i>
-                                            <span>Click "Run Code" to see the output here</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </section>
                 </div>
             </main>
 
             <style>{`
-                .main-content {
-                    min-height: calc(100vh - 250px);
-                }
-                .fade-in {
-                    animation: fadeIn 0.5s ease-in-out forwards;
-                }
-                .slide-in-left {
-                    animation: slideInLeft 0.5s ease-in-out forwards;
-                }
-                .slide-in-right {
-                    animation: slideInRight 0.5s ease-in-out forwards;
-                }
-                .slide-in-bottom {
-                    animation: slideInBottom 0.5s ease-in-out forwards;
-                }
+
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
                 }
+
                 @keyframes slideInLeft {
-                    from { opacity: 0; transform: translateX(-20px); }
-                    to { opacity: 1; transform: translateX(0); }
+                    from {
+                        opacity: 0;
+                        transform: translateX(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
                 }
+
                 @keyframes slideInRight {
-                    from { opacity: 0; transform: translateX(20px); }
-                    to { opacity: 1; transform: translateX(0); }
+                    from {
+                        opacity: 0;
+                        transform: translateX(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
                 }
+
                 @keyframes slideInBottom {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
-                .loading-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 50vh;
-                }
-                .loading-text {
-                    font-size: 1.2rem;
-                    color: var(--accent);
-                    animation: pulse 1.5s infinite;
-                }
+
                 @keyframes pulse {
                     0% { opacity: 0.6; }
                     50% { opacity: 1; }
                     100% { opacity: 0.6; }
-                }
-                .question-header {
-                    background: var(--dark-secondary);
-                    border-bottom: 1px solid #333;
-                    padding: 1.5rem 0;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                }
-                .difficulty-badge {
-                    display: inline-block;
-                    padding: 0.35rem 1rem;
-                    border-radius: 50px;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                    margin-left: 1rem;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-                .run-btn, .submit-btn {
-                    position: relative;
-                    overflow: hidden;
-                    z-index: 1;
-                }
-                .run-btn:before, .submit-btn:before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 0;
-                    height: 100%;
-                    background: rgba(255, 255, 255, 0.1);
-                    z-index: -1;
-                    transition: width 0.3s ease;
-                }
-                .run-btn:hover:not(:disabled):before,
-                .submit-btn:hover:not(:disabled):before {
-                    width: 100%;
-                }
-                .run-btn:disabled, .submit-btn:disabled {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                }
-                .question-card {
-                    background: var(--dark-secondary);
-                    border-radius: 15px;
-                    padding: 1.5rem;
-                    margin-bottom: 1.5rem;
-                    box-shadow: var(--card-shadow);
-                    border: 1px solid #333;
-                    transition: all 0.3s ease;
-                }
-                .question-card:hover {
-                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-                    border-color: #444;
-                }
-                .editor-wrapper {
-                    border-radius: 15px;
-                    overflow: hidden;
-                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-                    transition: all 0.3s ease;
-                    border: 1px solid #333;
-                }
-                .editor-wrapper:hover {
-                    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25), 0 0 10px rgba(0, 255, 136, 0.1);
-                    border-color: var(--accent);
-                }
-                .code-output {
-                    background-color: #282a36;
-                    color: #f8f8f2;
-                    padding: 15px;
-                    border-radius: 10px;
-                    font-family: monospace;
-                    min-height: 150px;
-                    max-height: 300px;
-                    overflow-y: auto;
-                    transition: all 0.3s ease;
-                    border: 1px solid #333;
-                }
-                .code-output:hover {
-                    border-color: #444;
-                }
-                .output-text {
-                    margin: 0;
-                    white-space: pre-wrap;
-                }
-                .empty-output {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100px;
-                    color: #6c757d;
-                }
-                .output-status {
-                    font-size: 0.85rem;
-                    padding: 0.25rem 0.75rem;
-                    border-radius: 50px;
-                }
-                .output-status.success {
-                    background-color: rgba(40, 167, 69, 0.2);
-                    color: #5cb85c;
-                }
-                .output-status.error {
-                    background-color: rgba(220, 53, 69, 0.2);
-                    color: #ff6b6b;
-                }
-                .difficulty-easy {
-                    background-color: #5cb85c;
-                    color: white;
-                }
-                .difficulty-medium {
-                    background-color: #f0ad4e;
-                    color: white;
-                }
-                .difficulty-hard {
-                    background-color: #d9534f;
-                    color: white;
                 }
             `}</style>
         </Layout>

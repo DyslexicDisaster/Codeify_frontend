@@ -14,7 +14,6 @@ const RegisterPage = ({ loggedInUser }) => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Handle input changes and clear any previous error messages.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({
@@ -24,7 +23,6 @@ const RegisterPage = ({ loggedInUser }) => {
         setErrorMessage('');
     };
 
-    // Validate form data before submission.
     const validateForm = () => {
         const { username, email, password, repeatPassword } = formData;
         const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -47,8 +45,6 @@ const RegisterPage = ({ loggedInUser }) => {
         return true;
     };
 
-    // Handle form submission.
-    // After a successful registration, navigate to the login page with a success message.
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -198,7 +194,7 @@ const RegisterPage = ({ loggedInUser }) => {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .fade-in {
                     animation: fadeIn 0.5s ease-in-out forwards;
                 }

@@ -1,222 +1,156 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getProgrammingLanguages, getQuestionsByLanguage, getUserProgress } from '../services/questionService';
-/**References:
- * https://www.youtube.com/watch?v=znbCa4Rr054 **/
+import { useAuth } from '../context/AuthContext';
+import {
+    getProgrammingLanguages,
+    getQuestionsByLanguage,
+    getUserProgress
+} from '../services/questionService';
 
-const QuestionsPage = ({ loggedInUser }) => {
+export default function QuestionsPage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { search } = useLocation();
+
     const [languages, setLanguages] = useState([]);
     const [selectedLanguage, setSelectedLanguage] = useState(null);
     const [questions, setQuestions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [activeIndex, setActiveIndex] = useState(null);
     const [progressData, setProgressData] = useState({
         progressPercentage: 0,
         completedQuestions: 0,
         totalQuestions: 0,
         progressDetails: []
     });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [activeIndex, setActiveIndex] = useState(null);
 
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    // Parse query parameters from URL
-    const getQueryParams = () => {
-        const searchParams = new URLSearchParams(location.search);
-        const languageId = searchParams.get('languageId');
-        return { languageId: languageId ? parseInt(languageId) : null };
-    };
+    const languageIdFromQuery = (() => {
+        const p = new URLSearchParams(search).get('languageId');
+        return p ? +p : null;
+    })();
 
     useEffect(() => {
-        // Redirect if not logged in
-        if (!loggedInUser) {
+        if (!user) {
             navigate('/login', {
-                state: { message: 'Please login to access the coding challenges.' }
+                state: { message: 'Please log in to access the coding challenges.' }
             });
-            return;
         }
-
-        const fetchLanguages = async () => {
-            try {
-                setLoading(true);
-                const data = await getProgrammingLanguages();
-                setLanguages(data);
-
-                const { languageId } = getQueryParams();
-
-                if (languageId && data.some(lang => lang.id === languageId)) {
-                    setSelectedLanguage(data.find(lang => lang.id === languageId));
-                } else if (data.length > 0) {
-                    setSelectedLanguage(data[0]);
-                }
-
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching languages:', err);
-                setError('Failed to load programming languages. Please try again later.');
-                setLoading(false);
-            }
-        };
-
-        fetchLanguages();
-    }, [loggedInUser, navigate, location.search]);
+    }, [user, navigate]);
 
     useEffect(() => {
-        const fetchQuestionsAndProgress = async () => {
-            if (!selectedLanguage) return;
+        if (!user) return;
 
-            try {
-                setLoading(true);
-                setError(null);
+        setLoading(true);
+        getProgrammingLanguages()
+            .then(data => {
+                setLanguages(data);
+                const pick =
+                    data.find(l => l.id === languageIdFromQuery) ||
+                    data[0] ||
+                    null;
+                setSelectedLanguage(pick);
+            })
+            .catch(() => {
+                setError('Failed to load programming languages.');
+            })
+            .finally(() => setLoading(false));
+    }, [user, languageIdFromQuery]);
 
-                const questionsData = await getQuestionsByLanguage(selectedLanguage.id);
+    useEffect(() => {
+        if (!user || !selectedLanguage) return;
 
+        setLoading(true);
+        setError('');
+
+        getQuestionsByLanguage(selectedLanguage.id)
+            .then(async questionList => {
+                let prog = { progressDetails: [] };
                 try {
-                    const progressData = await getUserProgress(selectedLanguage.id);
-                    setProgressData(progressData);
-
-                    const progressMap = {};
-                    if (progressData && progressData.progressDetails) {
-                        progressData.progressDetails.forEach(progress => {
-                            if (progress && progress.question && progress.question.id) {
-                                progressMap[progress.question.id] = {
-                                    status: progress.status,
-                                    score: progress.score
-                                };
-                            }
-                        });
-                    }
-
-                    const enhancedQuestions = questionsData.map(question => ({
-                        ...question,
-                        progress: progressMap[question.id] || { status: 'NOT_STARTED', score: 0 }
-                    }));
-
-                    setQuestions(enhancedQuestions);
-                } catch (progressErr) {
-                    console.error('Error fetching progress data:', progressErr);
-                    setQuestions(questionsData.map(question => ({
-                        ...question,
-                        progress: { status: 'NOT_STARTED', score: 0 }
-                    })));
+                    prog = await getUserProgress(selectedLanguage.id);
+                } catch {
                 }
+                setProgressData(prog);
 
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching questions:', err);
-                setError('Failed to load questions. Please try again later.');
-                setLoading(false);
-            }
-        };
+                const map = {};
+                (prog.progressDetails || []).forEach(p => {
+                    if (p.question?.id != null) {
+                        map[p.question.id] = { status: p.status, score: p.score };
+                    }
+                });
 
-        fetchQuestionsAndProgress();
-    }, [selectedLanguage]);
+                setQuestions(
+                    questionList.map(q => ({
+                        ...q,
+                        progress: map[q.id] || { status: 'NOT_STARTED', score: 0 }
+                    }))
+                );
+            })
+            .catch(() => {
+                setError('Failed to load questions.');
+            })
+            .finally(() => setLoading(false));
+    }, [user, selectedLanguage]);
 
-    const handleLanguageChange = (e) => {
-        const langId = parseInt(e.target.value);
-        const lang = languages.find(l => l.id === langId);
+    const handleLanguageChange = e => {
+        const id = +e.target.value;
+        const lang = languages.find(l => l.id === id);
         setSelectedLanguage(lang);
         setActiveIndex(null);
-
-        navigate(`/questions?languageId=${langId}`);
+        navigate(`/questions?languageId=${id}`);
+    };
+    const toggleAccordion = idx => {
+        setActiveIndex(activeIndex === idx ? null : idx);
     };
 
-    const getDifficultyClass = (difficulty) => {
-        switch(difficulty) {
-            case 'EASY':
-                return 'bg-success';
-            case 'MEDIUM':
-                return 'bg-warning text-dark';
-            case 'HARD':
-                return 'bg-danger';
-            default:
-                return '';
-        }
-    };
-
-    const getDifficultyIcon = (difficulty) => {
-        switch(difficulty) {
-            case 'EASY':
-                return 'fas fa-smile';
-            case 'MEDIUM':
-                return 'fas fa-meh';
-            case 'HARD':
-                return 'fas fa-frown';
-            default:
-                return 'fas fa-question';
-        }
-    };
-
-    const getStatusClass = (status) => {
-        switch(status) {
-            case 'COMPLETED':
-                return 'status-completed';
-            case 'IN_PROGRESS':
-                return 'status-in-progress';
-            case 'NOT_STARTED':
-            default:
-                return 'status-not-started';
-        }
-    };
-
-    const getStatusLabel = (status) => {
-        switch(status) {
-            case 'COMPLETED':
-                return 'Completed';
-            case 'IN_PROGRESS':
-                return 'In Progress';
-            case 'NOT_STARTED':
-            default:
-                return 'Not Started';
-        }
-    };
-
-    const toggleAccordion = (index) => {
-        setActiveIndex(activeIndex === index ? null : index);
-    };
-
-    if (loading && !selectedLanguage) {
-        return (
-            <Layout loggedInUser={loggedInUser}>
-                <div className="container mt-5 text-center main-content">
-                    <div className="loading-container">
-                        <div className="spinner-border text-accent" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3 loading-text">Loading programming languages...</p>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
-
-    if (error && !selectedLanguage) {
-        return (
-            <Layout loggedInUser={loggedInUser}>
-                <div className="container mt-5 main-content">
-                    <div className="alert alert-danger fade-in" role="alert">
-                        <i className="fas fa-exclamation-circle me-2"></i>
-                        {error}
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
+    const getDifficultyClass = d =>
+        d === 'EASY'
+            ? 'bg-success'
+            : d === 'MEDIUM'
+                ? 'bg-warning text-dark'
+                : d === 'HARD'
+                    ? 'bg-danger'
+                    : '';
+    const getDifficultyIcon = d =>
+        d === 'EASY'
+            ? 'fas fa-smile'
+            : d === 'MEDIUM'
+                ? 'fas fa-meh'
+                : d === 'HARD'
+                    ? 'fas fa-frown'
+                    : 'fas fa-question';
+    const getStatusClass = s =>
+        s === 'COMPLETED'
+            ? 'status-completed'
+            : s === 'IN_PROGRESS'
+                ? 'status-in-progress'
+                : 'status-not-started';
+    const getStatusLabel = s =>
+        s === 'COMPLETED'
+            ? 'Completed'
+            : s === 'IN_PROGRESS'
+                ? 'In Progress'
+                : 'Not Started';
 
     return (
-        <Layout loggedInUser={loggedInUser}>
+        <Layout>
             <section className="practice-section fade-in">
                 <div className="container">
-                    <h1 className="display-5 fw-bold mb-4 glowing-text">Practice Coding</h1>
-                    <p className="lead mb-5">Choose your preferred programming language and start solving challenges</p>
+                    <h1 className="display-5 fw-bold mb-4 glowing-text">
+                        Practice Coding
+                    </h1>
+                    <p className="lead mb-5">
+                        Choose your preferred programming language and start solving
+                        challenges
+                    </p>
 
                     {languages.length > 0 && (
                         <div className="language-selector slide-in-left">
                             <div className="d-flex align-items-center justify-content-between">
                                 <label htmlFor="languageSelect" className="fs-5 mb-0">
-                                    <i className="fas fa-code me-2"></i>Programming Language
+                                    <i className="fas fa-code me-2"></i>
+                                    Programming Language
                                 </label>
                                 <div className="select-wrapper">
                                     <select
@@ -241,27 +175,31 @@ const QuestionsPage = ({ loggedInUser }) => {
                         <div className="language-selector slide-in-right">
                             <div className="d-flex justify-content-between align-items-center mb-3">
                                 <h5 className="mb-0">
-                                    <i className="fas fa-chart-line me-2"></i>
-                                    Overall Progress
+                                    <i className="fas fa-chart-line me-2"></i> Overall Progress
                                 </h5>
-                                <span className="badge status-completed">{progressData.progressPercentage || 0}%</span>
+                                <span className="badge status-completed">
+                  {progressData.progressPercentage || 0}%
+                </span>
                             </div>
                             <div className="progress-container">
                                 <div className="progress">
                                     <div
                                         className="progress-bar"
                                         role="progressbar"
-                                        style={{ width: `${progressData.progressPercentage || 0}%` }}
+                                        style={{
+                                            width: `${progressData.progressPercentage || 0}%`
+                                        }}
                                         aria-valuenow={progressData.progressPercentage || 0}
                                         aria-valuemin="0"
                                         aria-valuemax="100"
-                                    ></div>
+                                    />
                                 </div>
                             </div>
                             <div className="mt-2 text-muted">
                                 <small>
                                     <i className="fas fa-check-circle me-1"></i>
-                                    {progressData.completedQuestions || 0} of {progressData.totalQuestions || 0} completed
+                                    {progressData.completedQuestions || 0} of{' '}
+                                    {progressData.totalQuestions || 0} completed
                                 </small>
                             </div>
                         </div>
@@ -293,44 +231,79 @@ const QuestionsPage = ({ loggedInUser }) => {
                         </div>
                     ) : questions.length > 0 ? (
                         <div className="custom-accordion fade-in">
-                            {questions.map((question, index) => (
+                            {questions.map((question, idx) => (
                                 <div
                                     key={question.id}
-                                    className={`accordion-item ${activeIndex === index ? 'active' : ''} ${question.progress?.status === 'COMPLETED' ? 'completed-question' : ''}`}
-                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                    className={`accordion-item ${
+                                        activeIndex === idx ? 'active' : ''
+                                    } ${
+                                        question.progress?.status === 'COMPLETED'
+                                            ? 'completed-question'
+                                            : ''
+                                    }`}
+                                    style={{ animationDelay: `${idx * 0.1}s` }}
                                 >
                                     <div
                                         className="accordion-header"
-                                        onClick={() => toggleAccordion(index)}
+                                        onClick={() => toggleAccordion(idx)}
                                     >
                                         <div className="question-title d-flex w-100 align-items-center">
-                                            <span className="fs-5">
-                                                {question.progress?.status === 'COMPLETED' &&
-                                                    <i className="fas fa-check-circle text-success me-2"></i>
-                                                }
-                                                {question.title}
-                                            </span>
+                      <span className="fs-5">
+                        {question.progress?.status === 'COMPLETED' && (
+                            <i className="fas fa-check-circle text-success me-2" />
+                        )}
+                          {question.title}
+                      </span>
                                             <div className="ms-auto d-flex gap-2">
-                                                <span className={`badge ${getDifficultyClass(question.difficulty)}`}>
-                                                    <i className={`${getDifficultyIcon(question.difficulty)} me-1`}></i>
-                                                    {question.difficulty}
-                                                </span>
+                        <span
+                            className={`badge ${getDifficultyClass(
+                                question.difficulty
+                            )}`}
+                        >
+                          <i
+                              className={`${getDifficultyIcon(
+                                  question.difficulty
+                              )} me-1`}
+                          />
+                            {question.difficulty}
+                        </span>
                                                 <span className="badge bg-info">
-                                                    <i className="fas fa-star me-1"></i>
-                                                    {question.difficulty === 'EASY' ? '100' :
-                                                        question.difficulty === 'MEDIUM' ? '200' : '300'} pts
-                                                </span>
-                                                <span className={`badge ${getStatusClass(question.progress?.status || 'NOT_STARTED')}`}>
-                                                    {getStatusLabel(question.progress?.status || 'NOT_STARTED')}
-                                                    {question.progress?.status === 'COMPLETED' && question.progress?.score !== undefined &&
-                                                        <span className="ms-1">({question.progress.score}%)</span>
-                                                    }
-                                                </span>
+                          <i className="fas fa-star me-1" />
+                                                    {question.difficulty === 'EASY'
+                                                        ? '100'
+                                                        : question.difficulty === 'MEDIUM'
+                                                            ? '200'
+                                                            : '300'}{' '}
+                                                    pts
+                        </span>
+                                                <span
+                                                    className={`badge ${getStatusClass(
+                                                        question.progress?.status || 'NOT_STARTED'
+                                                    )}`}
+                                                >
+                          {getStatusLabel(
+                              question.progress?.status || 'NOT_STARTED'
+                          )}
+                                                    {question.progress?.status === 'COMPLETED' &&
+                                                        question.progress?.score != null && (
+                                                            <span className="ms-1">
+                                ({question.progress.score}%)
+                              </span>
+                                                        )}
+                        </span>
                                             </div>
                                         </div>
-                                        <i className={`accordion-icon fas fa-chevron-${activeIndex === index ? 'up' : 'down'}`}></i>
+                                        <i
+                                            className={`accordion-icon fas fa-chevron-${
+                                                activeIndex === idx ? 'up' : 'down'
+                                            }`}
+                                        />
                                     </div>
-                                    <div className={`accordion-content ${activeIndex === index ? 'show' : ''}`}>
+                                    <div
+                                        className={`accordion-content ${
+                                            activeIndex === idx ? 'show' : ''
+                                        }`}
+                                    >
                                         <div className="accordion-body">
                                             <p className="mb-4">{question.description}</p>
                                             <div className="d-flex justify-content-end">
@@ -338,10 +311,12 @@ const QuestionsPage = ({ loggedInUser }) => {
                                                     to={`/questions/${question.id}/attempt`}
                                                     className="attempt-btn btn"
                                                 >
-                                                    <i className="fas fa-code me-2"></i>
-                                                    {question.progress?.status === 'COMPLETED' ? 'Revisit Challenge' :
-                                                        question.progress?.status === 'IN_PROGRESS' ? 'Continue Challenge' :
-                                                            'Start Challenge'}
+                                                    <i className="fas fa-code me-2" />
+                                                    {question.progress?.status === 'COMPLETED'
+                                                        ? 'Revisit Challenge'
+                                                        : question.progress?.status === 'IN_PROGRESS'
+                                                            ? 'Continue Challenge'
+                                                            : 'Start Challenge'}
                                                 </Link>
                                             </div>
                                         </div>
@@ -350,14 +325,16 @@ const QuestionsPage = ({ loggedInUser }) => {
                             ))}
                         </div>
                     ) : (
-                        languages.length > 0 && selectedLanguage && (
+                        languages.length > 0 &&
+                        selectedLanguage && (
                             <div className="language-selector text-center fade-in">
                                 <div className="empty-state">
-                                    <i className="fas fa-code-branch fa-3x mb-3 text-muted"></i>
+                                    <i className="fas fa-code-branch fa-3x mb-3 text-muted" />
                                     <h4 className="mb-3">No Questions Available</h4>
                                     <p className="mb-0">
-                                        There are currently no questions available for the selected programming language.
-                                        Please try selecting a different language or check back later.
+                                        There are currently no questions available for the selected
+                                        programming language. Please try selecting a different
+                                        language or check back later.
                                     </p>
                                 </div>
                             </div>
@@ -366,7 +343,7 @@ const QuestionsPage = ({ loggedInUser }) => {
                 </div>
             </section>
 
-            <style jsx>{`
+            <style>{`
                 .main-content {
                     min-height: calc(100vh - 450px);
                 }
@@ -684,5 +661,3 @@ const QuestionsPage = ({ loggedInUser }) => {
         </Layout>
     );
 };
-
-export default QuestionsPage;

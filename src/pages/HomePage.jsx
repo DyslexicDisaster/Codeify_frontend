@@ -1,78 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { useAuth } from '../context/AuthContext';
 
-
-/**References:
- * https://www.youtube.com/watch?v=znbCa4Rr054 **/
-
-const HomePage = ({ loggedInUser }) => {
+const HomePage = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
+
     const [isVisible, setIsVisible] = useState({
         hero: false,
         features: false,
         slideshow: false,
         stats: false
     });
-
-    // Slideshow state
     const [currentSlide, setCurrentSlide] = useState(0);
     const totalSlides = 3;
 
-    // Functions to handle slide transitions
-    const nextSlide = () => {
-        setCurrentSlide((prevSlide) => (prevSlide + 1) % totalSlides);
-    };
-
-    const prevSlide = () => {
-        setCurrentSlide((prevSlide) => (prevSlide - 1 + totalSlides) % totalSlides);
-    };
-
     useEffect(() => {
-        setIsVisible({
-            hero: true,
-            features: true,
-            slideshow: false,
-            stats: false
-        });
-
-        // Auto-advance slideshow
+        setIsVisible(v => ({ ...v, hero: true, features: true }));
         const slideInterval = setInterval(() => {
-            nextSlide();
-        }, 5000); // Change slide every 5 seconds
+            setCurrentSlide(i => (i + 1) % totalSlides);
+        }, 5000);
 
         const handleScroll = () => {
-            const scrollPosition = window.scrollY + window.innerHeight;
-            const featuresSection = document.querySelector('.features-section');
-            const slideshowSection = document.querySelector('.slideshow-section');
-            const statsSection = document.querySelector('.stats-section');
+            const scrollPos = window.scrollY + window.innerHeight;
+            const featuresEl  = document.querySelector('.features-section');
+            const slideshowEl = document.querySelector('.slideshow-section');
+            const statsEl     = document.querySelector('.stats-section');
 
-            if (featuresSection && scrollPosition > featuresSection.offsetTop + 100) {
-                setIsVisible(prev => ({ ...prev, features: true }));
-            }
-
-            if (slideshowSection && scrollPosition > slideshowSection.offsetTop + 100) {
-                setIsVisible(prev => ({ ...prev, slideshow: true }));
-            }
-
-            if (statsSection && scrollPosition > statsSection.offsetTop + 100) {
-                setIsVisible(prev => ({ ...prev, stats: true }));
-            }
+            if (featuresEl && scrollPos > featuresEl.offsetTop + 100)
+                setIsVisible(v => ({ ...v, features: true }));
+            if (slideshowEl && scrollPos > slideshowEl.offsetTop + 100)
+                setIsVisible(v => ({ ...v, slideshow: true }));
+            if (statsEl && scrollPos > statsEl.offsetTop + 100)
+                setIsVisible(v => ({ ...v, stats: true }));
         };
 
         window.addEventListener('scroll', handleScroll);
-
-        // Clean up
         return () => {
-            window.removeEventListener('scroll', handleScroll);
             clearInterval(slideInterval);
-        }
+            window.removeEventListener('scroll', handleScroll);
+        };
     }, []);
 
     return (
-        <Layout loggedInUser={loggedInUser}>
+        <Layout>
             <section className="hero-section">
-                <div className="code-background"></div>
+                <div className="code-background" />
                 <div className={`container text-center ${isVisible.hero ? 'fade-in-up' : ''}`}>
                     <h1 className="display-4 fw-bold mb-4 hero-text glowing-text">
                         Master Coding Through Practice
@@ -82,7 +56,7 @@ const HomePage = ({ loggedInUser }) => {
                     </p>
                     <button
                         onClick={() => {
-                            if (loggedInUser) {
+                            if (user) {
                                 navigate('/questions');
                             } else {
                                 navigate('/login', {
@@ -90,121 +64,14 @@ const HomePage = ({ loggedInUser }) => {
                                 });
                             }
                         }}
-                        className="btn btn-accent btn-lg pulse-animation">
-                        <i className="fas fa-code me-2"></i>Start Learning
+                        className="btn btn-accent btn-lg pulse-animation"
+                    >
+                        <i className="fas fa-code me-2" />Start Learning
                     </button>
                 </div>
             </section>
 
-            <section className="py-5 features-section">
-                <div className="container">
-                    <div className="row g-4">
-                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-left' : ''}`}>
-                            <div className="feature-card h-100">
-                                <div className="feature-icon">
-                                    <i className="fas fa-laptop-code"></i>
-                                </div>
-                                <h3 className="mb-3">Interactive Challenges</h3>
-                                <p>Solve real-world coding problems with instant feedback and AI-powered solutions.</p>
-                            </div>
-                        </div>
-                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-up' : ''}`} style={{ transitionDelay: '0.2s' }}>
-                            <div className="feature-card h-100">
-                                <div className="feature-icon">
-                                    <i className="fas fa-chart-line"></i>
-                                </div>
-                                <h3 className="mb-3">Progress Tracking</h3>
-                                <p>Monitor your learning journey with detailed statistics and achievement badges.</p>
-                            </div>
-                        </div>
-                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-right' : ''}`} style={{ transitionDelay: '0.4s' }}>
-                            <div className="feature-card h-100">
-                                <div className="feature-icon">
-                                    <i className="fas fa-trophy"></i>
-                                </div>
-                                <h3 className="mb-3">Leaderboards</h3>
-                                <p>Compete with other learners and climb the ranks through consistent practice.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className={`slideshow-section py-5 ${isVisible.slideshow ? 'active' : ''}`}>
-                <div className="container">
-                    <h2 className="text-center mb-5">Experience Codeify</h2>
-                    <div className="slideshow-container">
-                        <div className="slideshow">
-                            <div className={`slide ${currentSlide === 0 ? 'active' : ''}`}>
-                                <div className="slide-image-container">
-                                    <img src="https://iili.io/3nqGO5x.md.png" alt="Coding interface" className="slide-image" />
-                                </div>
-                                <div className="slide-caption">
-                                    <h3>Interactive Coding Environment</h3>
-                                    <p>Write, test, and run your code with real-time feedback</p>
-                                </div>
-                            </div>
-                            <div className={`slide ${currentSlide === 1 ? 'active' : ''}`}>
-                                <div className="slide-image-container">
-                                    <img src="https://iili.io/3nqGeOQ.md.png" alt="Solution feedback" className="slide-image" />
-                                </div>
-                                <div className="slide-caption">
-                                    <h3>Instant Solution Feedback</h3>
-                                    <p>Get detailed grading and suggestions to improve your code</p>
-                                </div>
-                            </div>
-                            <div className={`slide ${currentSlide === 2 ? 'active' : ''}`}>
-                                <div className="slide-image-container">
-                                    <img src="https://iili.io/3nqGNJj.md.png" alt="Coding progress" className="slide-image" />
-                                </div>
-                                <div className="slide-caption">
-                                    <h3>Track Your Progress</h3>
-                                    <p>Monitor your learning journey with challenges of varying difficulty</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="slideshow-controls">
-                            <button className="control-btn prev-btn" onClick={prevSlide}>
-                                <i className="fas fa-chevron-left"></i>
-                            </button>
-                            <div className="slideshow-indicators">
-                                {[0, 1, 2].map(index => (
-                                    <span
-                                        key={index}
-                                        className={`indicator ${currentSlide === index ? 'active' : ''}`}
-                                        onClick={() => setCurrentSlide(index)}
-                                    ></span>
-                                ))}
-                            </div>
-                            <button className="control-btn next-btn" onClick={nextSlide}>
-                                <i className="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className={`stats-section ${isVisible.stats ? 'fade-in' : ''}`}>
-                <div className="container">
-                    <div className="row">
-                        <div className="col-md-4 stat-item">
-                            <div className="stat-number counter" data-target="10">10</div>
-                            <div>Coding Challenges</div>
-                        </div>
-                        <div className="col-md-4 stat-item">
-                            <div className="stat-number counter" data-target="3">3</div>
-                            <div>Active Users</div>
-                        </div>
-                        <div className="col-md-4 stat-item">
-                            <div className="stat-number">TBA</div>
-                            <div>Solutions Submitted</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <style jsx>{`
+            <style>{`
                 .code-background {
                     position: absolute;
                     top: 0;

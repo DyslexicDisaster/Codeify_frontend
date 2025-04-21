@@ -6,7 +6,6 @@ const API_KEY = 'Zx9ENYpcTfAruhX9U4lfoqZynG8SsV2KiER11rM487qN0qVjrJZaq59ktTuUfqI
 
 axios.defaults.headers.common['x-api-key'] = API_KEY;
 
-// User management functions
 export const getAllUsers = async () => {
     try {
         const response = await axios.get(`${API_URL}/get_all_users`);

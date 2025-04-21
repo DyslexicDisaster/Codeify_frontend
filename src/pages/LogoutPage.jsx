@@ -14,7 +14,6 @@ const LogoutPage = ({ loggedInUser, setLoggedInUser }) => {
             } catch (error) {
                 console.error('Logout error:', error);
             } finally {
-                // Clear both the user object and the JWT token from localStorage
                 localStorage.removeItem('user');
                 localStorage.removeItem('jwtToken');
                 setLoggedInUser(null);
