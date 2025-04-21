@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import LoginFailedPage from './pages/LoginFailedPage';
 import RegisterPage from './pages/RegisterPage';
 import LogoutPage from "./pages/LogoutPage";
+import ProfilePage from './pages/ProfilePage';
 
 // Import Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -44,7 +45,7 @@ const App = () => {
           <Route path="/logout" element={<LogoutPage loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />} />
           <Route path="/grade" element={<GradePage loggedInUser={loggedInUser} />} />
           <Route path="/oauth2-success" element={<OAuth2Success />} />
-
+            <Route path="/profile" element={<ProfilePage loggedInUser={loggedInUser} />} />           {/* Admin route */}          
           <Route
               path="/admin"
               element={

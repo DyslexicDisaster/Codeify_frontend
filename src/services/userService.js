@@ -76,3 +76,8 @@ export const logoutUser = async () => {
         throw error;
     }
 };
+
+export const getUserProfile = async () => {
+    const response = await axiosClient.get('/api/user/profile');
+    return response.data;
+};
