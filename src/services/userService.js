@@ -13,14 +13,11 @@ const API_URL_USER = 'http://localhost:8080/api/auth';
  */
 export const registerUser = async (username, password, email) => {
     try {
-        const response = await axiosClient.post('/api/auth/register', new URLSearchParams({
-            username: username,
-            password: password,
-            email: email
-        }), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
+        // axios will default to application/json
+        const response = await axiosClient.post('/api/auth/register', {
+            username,
+            password,
+            email
         });
         return response.data;
     } catch (error) {
