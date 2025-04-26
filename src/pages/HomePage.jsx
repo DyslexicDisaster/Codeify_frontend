@@ -16,6 +16,14 @@ const HomePage = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const totalSlides = 3;
 
+    const nextSlide = () => {
+        setCurrentSlide((prevSlide) => (prevSlide + 1) % totalSlides);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prevSlide) => (prevSlide - 1 + totalSlides) % totalSlides);
+    };
+
     useEffect(() => {
         setIsVisible(v => ({ ...v, hero: true, features: true }));
         const slideInterval = setInterval(() => {
@@ -46,7 +54,7 @@ const HomePage = () => {
     return (
         <Layout>
             <section className="hero-section">
-                <div className="code-background" />
+                <div className="code-background"></div>
                 <div className={`container text-center ${isVisible.hero ? 'fade-in-up' : ''}`}>
                     <h1 className="display-4 fw-bold mb-4 hero-text glowing-text">
                         Master Coding Through Practice
@@ -60,14 +68,126 @@ const HomePage = () => {
                                 navigate('/questions');
                             } else {
                                 navigate('/login', {
-                                    state: { message: 'Please login or register first to access coding challenges.' }
+                                    state: {message: 'Please login or register first to access coding challenges.'}
                                 });
                             }
                         }}
-                        className="btn btn-accent btn-lg pulse-animation"
-                    >
-                        <i className="fas fa-code me-2" />Start Learning
+                        className="btn btn-accent btn-lg pulse-animation">
+                        <i className="fas fa-code me-2"></i>Start Learning
                     </button>
+                </div>
+            </section>
+
+            <section className="py-5 features-section">
+                <div className="container">
+                    <div className="row g-4">
+                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-left' : ''}`}>
+                            <div className="feature-card h-100">
+                                <div className="feature-icon">
+                                    <i className="fas fa-laptop-code"></i>
+                                </div>
+                                <h3 className="mb-3">Interactive Challenges</h3>
+                                <p>Solve real-world coding problems with instant feedback and AI-powered solutions.</p>
+                            </div>
+                        </div>
+                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-up' : ''}`}
+                             style={{transitionDelay: '0.2s'}}>
+                            <div className="feature-card h-100">
+                                <div className="feature-icon">
+                                    <i className="fas fa-chart-line"></i>
+                                </div>
+                                <h3 className="mb-3">Progress Tracking</h3>
+                                <p>Monitor your learning journey with detailed statistics and achievement badges.</p>
+                            </div>
+                        </div>
+                        <div className={`col-md-4 ${isVisible.features ? 'fade-in-right' : ''}`}
+                             style={{transitionDelay: '0.4s'}}>
+                            <div className="feature-card h-100">
+                                <div className="feature-icon">
+                                    <i className="fas fa-trophy"></i>
+                                </div>
+                                <h3 className="mb-3">Leaderboards</h3>
+                                <p>Compete with other learners and climb the ranks through consistent practice.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className={`slideshow-section py-5 ${isVisible.slideshow ? 'active' : ''}`}>
+                <div className="container">
+                    <h2 className="text-center mb-5">Experience Codeify</h2>
+                    <div className="slideshow-container">
+                        <div className="slideshow">
+                            <div className={`slide ${currentSlide === 0 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGO5x.md.png" alt="Coding interface"
+                                         className="slide-image"/>
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Interactive Coding Environment</h3>
+                                    <p>Write, test, and run your code with real-time feedback</p>
+                                </div>
+                            </div>
+                            <div className={`slide ${currentSlide === 1 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGeOQ.md.png" alt="Solution feedback"
+                                         className="slide-image"/>
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Instant Solution Feedback</h3>
+                                    <p>Get detailed grading and suggestions to improve your code</p>
+                                </div>
+                            </div>
+                            <div className={`slide ${currentSlide === 2 ? 'active' : ''}`}>
+                                <div className="slide-image-container">
+                                    <img src="https://iili.io/3nqGNJj.md.png" alt="Coding progress"
+                                         className="slide-image"/>
+                                </div>
+                                <div className="slide-caption">
+                                    <h3>Track Your Progress</h3>
+                                    <p>Monitor your learning journey with challenges of varying difficulty</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="slideshow-controls">
+                            <button className="control-btn prev-btn" onClick={prevSlide}>
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div className="slideshow-indicators">
+                                {[0, 1, 2].map(index => (
+                                    <span
+                                        key={index}
+                                        className={`indicator ${currentSlide === index ? 'active' : ''}`}
+                                        onClick={() => setCurrentSlide(index)}
+                                    ></span>
+                                ))}
+                            </div>
+                            <button className="control-btn next-btn" onClick={nextSlide}>
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className={`stats-section ${isVisible.stats ? 'fade-in' : ''}`}>
+                <div className="container">
+                    <div className="row">
+                        <div className="col-md-4 stat-item">
+                            <div className="stat-number counter" data-target="10">10</div>
+                            <div>Coding Challenges</div>
+                        </div>
+                        <div className="col-md-4 stat-item">
+                            <div className="stat-number counter" data-target="3">3</div>
+                            <div>Active Users</div>
+                        </div>
+                        <div className="col-md-4 stat-item">
+                            <div className="stat-number">TBA</div>
+                            <div>Solutions Submitted</div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -444,7 +564,7 @@ const HomePage = () => {
                         });
                     });
                 `
-            }} />
+            }}/>
         </Layout>
     );
 };
