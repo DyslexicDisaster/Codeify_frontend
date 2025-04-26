@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import AdminStatistics from '../components/AdminStatistics';
+import {
+    getAllUsers,
+    addUser,
+    updateUser,
+    deleteUser,
+    getAllQuestions,
+    getQuestionById,
+    addQuestion,
+    updateQuestion,
+    deleteQuestion,
+    getAllProgrammingLanguages
+} from '../services/adminService';
 
-const API_URL = 'http://localhost:8080/admin';
-
-const AdminPage = ({ loggedInUser }) => {
+const AdminPage = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('users');
+    const [activeTab, setActiveTab] = useState('statistics'); // Default to statistics tab
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
@@ -19,7 +31,6 @@ const AdminPage = ({ loggedInUser }) => {
         username: '',
         email: '',
         password: '',
-        salt: '',
         role: 'user'
     });
     const [isEditingUser, setIsEditingUser] = useState(false);
@@ -31,7 +42,7 @@ const AdminPage = ({ loggedInUser }) => {
         title: '',
         description: '',
         programmingLanguage: { id: 1 },
-        questionType: 'CODE',
+        questionType: 'CODING',
         difficulty: 'EASY',
         starterCode: '',
         aiSolutionRequired: false,
@@ -41,9 +52,15 @@ const AdminPage = ({ loggedInUser }) => {
     const [programmingLanguages, setProgrammingLanguages] = useState([]);
 
     useEffect(() => {
-        if (!loggedInUser) {
+        // Check if user is logged in and has admin role
+        if (!user) {
             navigate('/login', {
                 state: { message: 'Please login to access the admin panel.' }
+            });
+            return;
+        } else if (user.role !== 'admin') {
+            navigate('/', {
+                state: { message: 'You do not have permission to access the admin panel.' }
             });
             return;
         }
@@ -55,19 +72,18 @@ const AdminPage = ({ loggedInUser }) => {
         } else if (activeTab === 'questions') {
             fetchQuestions();
         }
-    }, [loggedInUser, navigate, activeTab]);
+    }, [user, navigate, activeTab]);
 
     const fetchUsers = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_URL}/get_all_users`);
-            console.log('Users API response:', response.data);
+            const data = await getAllUsers();
+            console.log('Users API response:', data);
 
-
-            if (typeof response.data === 'string') {
+            if (typeof data === 'string') {
                 try {
-                    const userDataString = response.data;
+                    const userDataString = data;
                     const userObjects = [];
 
                     // Extract individual user entries using regex
@@ -102,8 +118,8 @@ const AdminPage = ({ loggedInUser }) => {
                     setError('Error parsing user data. The format may have changed.');
                     setUsers([]);
                 }
-            } else if (Array.isArray(response.data)) {
-                setUsers(response.data);
+            } else if (Array.isArray(data)) {
+                setUsers(data);
             } else {
                 setUsers([]);
             }
@@ -139,10 +155,10 @@ const AdminPage = ({ loggedInUser }) => {
 
         try {
             if (isEditingUser) {
-                await axios.put(`${API_URL}/update_user`, userFormData);
+                await updateUser(userFormData);
                 setSuccessMessage('User updated successfully!');
             } else {
-                await axios.post(`${API_URL}/add_user`, userFormData);
+                await addUser(userFormData);
                 setSuccessMessage('User added successfully!');
             }
 
@@ -162,7 +178,6 @@ const AdminPage = ({ loggedInUser }) => {
             username: user.username,
             email: user.email,
             password: '',
-            salt: user.salt,
             role: user.role
         });
         setSelectedUser(user);
@@ -177,7 +192,7 @@ const AdminPage = ({ loggedInUser }) => {
         setSuccessMessage(null);
 
         try {
-            await axios.delete(`${API_URL}/delete_user/${userId}`);
+            await deleteUser(userId);
             setSuccessMessage('User deleted successfully!');
             fetchUsers();
         } catch (err) {
@@ -194,7 +209,6 @@ const AdminPage = ({ loggedInUser }) => {
             username: '',
             email: '',
             password: '',
-            salt: '',
             role: 'user'
         });
         setSelectedUser(null);
@@ -206,12 +220,12 @@ const AdminPage = ({ loggedInUser }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_URL}/get_all_questions`);
-            console.log('Questions API response:', response.data);
+            const data = await getAllQuestions();
+            console.log('Questions API response:', data);
 
-            if (typeof response.data === 'string') {
+            if (typeof data === 'string') {
                 try {
-                    const questionDataString = response.data;
+                    const questionDataString = data;
                     const questionObjects = [];
 
                     const questionRegex = /Question\{([^}]+)\}/g;
@@ -234,7 +248,7 @@ const AdminPage = ({ loggedInUser }) => {
                                     title,
                                     description: description || '',
                                     difficulty: difficulty || 'EASY',
-                                    questionType: questionType || 'CODE',
+                                    questionType: questionType || 'CODING',
                                     programmingLanguage: {
                                         id: langId ? parseInt(langId) : 1,
                                         name: langName || 'Unknown'
@@ -251,8 +265,8 @@ const AdminPage = ({ loggedInUser }) => {
                     setError('Error parsing question data. The format may have changed.');
                     setQuestions([]);
                 }
-            } else if (Array.isArray(response.data)) {
-                setQuestions(response.data);
+            } else if (Array.isArray(data)) {
+                setQuestions(data);
             } else {
                 setQuestions([]);
             }
@@ -267,8 +281,8 @@ const AdminPage = ({ loggedInUser }) => {
 
     const fetchProgrammingLanguages = async () => {
         try {
-            const response = await axios.get(`${API_URL}/programming_languages`);
-            setProgrammingLanguages(Array.isArray(response.data) ? response.data : []);
+            const data = await getAllProgrammingLanguages();
+            setProgrammingLanguages(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching programming languages:', err);
         }
@@ -318,10 +332,10 @@ const AdminPage = ({ loggedInUser }) => {
 
         try {
             if (isEditingQuestion) {
-                await axios.put(`${API_URL}/update_question`, questionFormData);
+                await updateQuestion(questionFormData);
                 setSuccessMessage('Question updated successfully!');
             } else {
-                await axios.post(`${API_URL}/add_question`, questionFormData);
+                await addQuestion(questionFormData);
                 setSuccessMessage('Question added successfully!');
             }
 
@@ -343,9 +357,9 @@ const AdminPage = ({ loggedInUser }) => {
             programmingLanguage: question.programmingLanguage,
             questionType: question.questionType,
             difficulty: question.difficulty,
-            starterCode: question.starterCode,
-            aiSolutionRequired: question.aiSolutionRequired,
-            correctAnswer: question.correctAnswer
+            starterCode: question.starterCode || '',
+            aiSolutionRequired: question.aiSolutionRequired || false,
+            correctAnswer: question.correctAnswer || ''
         });
         setSelectedQuestion(question);
         setIsEditingQuestion(true);
@@ -359,7 +373,7 @@ const AdminPage = ({ loggedInUser }) => {
         setSuccessMessage(null);
 
         try {
-            await axios.delete(`${API_URL}/delete_question/${questionId}`);
+            await deleteQuestion(questionId);
             setSuccessMessage('Question deleted successfully!');
             fetchQuestions();
         } catch (err) {
@@ -376,7 +390,7 @@ const AdminPage = ({ loggedInUser }) => {
             title: '',
             description: '',
             programmingLanguage: { id: programmingLanguages[0]?.id || 1 },
-            questionType: 'CODE',
+            questionType: 'CODING',
             difficulty: 'EASY',
             starterCode: '',
             aiSolutionRequired: false,
@@ -402,7 +416,7 @@ const AdminPage = ({ loggedInUser }) => {
     };
 
     return (
-        <Layout loggedInUser={loggedInUser}>
+        <Layout>
             <div className="admin-container main-content">
                 <div className="container mt-4">
                     <div className="admin-header mb-4 fade-in">
@@ -410,7 +424,7 @@ const AdminPage = ({ loggedInUser }) => {
                             <i className="fas fa-cogs me-2"></i>Admin Panel
                         </h1>
                         <p className="text-center admin-subtitle">
-                            Manage users and questions for the Codeify platform
+                            Manage users, questions, and view platform statistics
                         </p>
                     </div>
 
@@ -431,6 +445,14 @@ const AdminPage = ({ loggedInUser }) => {
                     <ul className="nav nav-tabs admin-tabs mb-4">
                         <li className="nav-item">
                             <button
+                                className={`nav-link ${activeTab === 'statistics' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('statistics')}
+                            >
+                                <i className="fas fa-chart-bar me-2"></i>Statistics
+                            </button>
+                        </li>
+                        <li className="nav-item">
+                            <button
                                 className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('users')}
                             >
@@ -446,6 +468,12 @@ const AdminPage = ({ loggedInUser }) => {
                             </button>
                         </li>
                     </ul>
+
+                    {activeTab === 'statistics' && (
+                        <div className="statistics-management slide-in-right">
+                            <AdminStatistics />
+                        </div>
+                    )}
 
                     {activeTab === 'users' && (
                         <div className="user-management slide-in-right">
@@ -788,8 +816,8 @@ const AdminPage = ({ loggedInUser }) => {
                                                                 onChange={handleQuestionTypeChange}
                                                                 required
                                                             >
-                                                                <option value="CODE">Code</option>
-                                                                <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                                                <option value="CODING">Coding</option>
+                                                                <option value="LOGIC">Logic</option>
                                                             </select>
                                                         </div>
                                                     </div>

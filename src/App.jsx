@@ -33,11 +33,8 @@ export default function App() {
                     <Route path="/grade" element={<PrivateRoute><GradePage/></PrivateRoute>} />
                     <Route path="/logout" element={<PrivateRoute><LogoutPage/></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><ProfilePage/></PrivateRoute>} />
-                    <Route path="/admin" element={
-                        <PrivateRoute>
-                            <AdminRoute><AdminPage/></AdminRoute>
-                        </PrivateRoute>
-                    }/>
+
+                    <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>
