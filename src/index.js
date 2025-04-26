@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './styles.css';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -14,3 +15,5 @@ root.render(
         </AuthProvider>
     </React.StrictMode>
 );
+
+serviceWorkerRegistration.register();
