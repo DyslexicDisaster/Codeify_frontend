@@ -4,22 +4,15 @@ import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import AdminStatistics from '../components/AdminStatistics';
 import {
-    getAllUsers,
-    addUser,
-    updateUser,
-    deleteUser,
-    getAllQuestions,
-    getQuestionById,
-    addQuestion,
-    updateQuestion,
-    deleteQuestion,
+    getAllUsers, addUser, updateUser, deleteUser,
+    getAllQuestions, addQuestion, updateQuestion, deleteQuestion,
     getAllProgrammingLanguages
 } from '../services/adminService';
 
 const AdminPage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('statistics'); // Default to statistics tab
+    const [activeTab, setActiveTab] = useState('statistics');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
@@ -36,6 +29,7 @@ const AdminPage = () => {
     const [isEditingUser, setIsEditingUser] = useState(false);
 
     const [questions, setQuestions] = useState([]);
+    const [filteredQuestions, setFilteredQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [questionFormData, setQuestionFormData] = useState({
         id: 0,
@@ -86,13 +80,11 @@ const AdminPage = () => {
                     const userDataString = data;
                     const userObjects = [];
 
-                    // Extract individual user entries using regex
                     const userRegex = /User\{([^}]+)\}/g;
                     const matches = userDataString.match(userRegex);
 
                     if (matches && matches.length > 0) {
                         matches.forEach(userString => {
-                            // For each user string, extract the field values
                             const userId = userString.match(/userId=(\d+)/)?.[1];
                             const username = userString.match(/username='([^']+)'/)?.[1];
                             const email = userString.match(/email='([^']+)'/)?.[1];
@@ -215,7 +207,7 @@ const AdminPage = () => {
         setIsEditingUser(false);
     };
 
-    // Question management functions
+
     const fetchQuestions = async () => {
         setLoading(true);
         setError(null);
@@ -223,60 +215,75 @@ const AdminPage = () => {
             const data = await getAllQuestions();
             console.log('Questions API response:', data);
 
+            let parsedQuestions = [];
+
             if (typeof data === 'string') {
                 try {
-                    const questionDataString = data;
-                    const questionObjects = [];
-
-                    const questionRegex = /Question\{([^}]+)\}/g;
-                    const matches = questionDataString.match(questionRegex);
-
-                    if (matches && matches.length > 0) {
-                        matches.forEach(questionString => {
-                            const id = questionString.match(/id=(\d+)/)?.[1];
-                            const title = questionString.match(/title='([^']+)'/)?.[1];
-                            const description = questionString.match(/description='([^']+)'/)?.[1];
-                            const difficulty = questionString.match(/difficulty=([^,}]+)/)?.[1];
-                            const questionType = questionString.match(/questionType=([^,}]+)/)?.[1];
-
-                            const langId = questionString.match(/programmingLanguage=ProgrammingLanguage\{id=(\d+)/)?.[1];
-                            const langName = questionString.match(/programmingLanguage=ProgrammingLanguage\{[^}]*name='([^']+)'/)?.[1];
-
-                            if (id && title) {
-                                questionObjects.push({
-                                    id: parseInt(id),
-                                    title,
-                                    description: description || '',
-                                    difficulty: difficulty || 'EASY',
-                                    questionType: questionType || 'CODING',
-                                    programmingLanguage: {
-                                        id: langId ? parseInt(langId) : 1,
-                                        name: langName || 'Unknown'
-                                    }
-                                });
-                            }
-                        });
-                    }
-
-                    console.log('Parsed questions:', questionObjects);
-                    setQuestions(questionObjects);
+                    const questionObjects = parseQuestionString(data);
+                    parsedQuestions = questionObjects;
                 } catch (parseErr) {
                     console.error('Error parsing question data:', parseErr);
                     setError('Error parsing question data. The format may have changed.');
-                    setQuestions([]);
                 }
             } else if (Array.isArray(data)) {
-                setQuestions(data);
-            } else {
-                setQuestions([]);
+                parsedQuestions = data;
             }
+
+            parsedQuestions = parsedQuestions.map(q => {
+                if (!q.programmingLanguage) {
+                    return {
+                        ...q,
+                        programmingLanguage: {
+                            id: 0,
+                            name: 'Unknown'
+                        }
+                    };
+                }
+                return q;
+            });
+
+            setQuestions(parsedQuestions);
+            setFilteredQuestions(parsedQuestions);
         } catch (err) {
             console.error('Error fetching questions:', err);
             setError('Failed to load questions. Please try again.');
-            setQuestions([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const parseQuestionString = (questionDataString) => {
+        const questionObjects = [];
+        const questionRegex = /Question\{([^}]+)\}/g;
+        const matches = questionDataString.match(questionRegex);
+
+        if (matches && matches.length > 0) {
+            matches.forEach(questionString => {
+                const id = questionString.match(/id=(\d+)/)?.[1];
+                const title = questionString.match(/title='([^']+)'/)?.[1];
+                const description = questionString.match(/description='([^']+)'/)?.[1];
+                const difficulty = questionString.match(/difficulty=([^,}]+)/)?.[1];
+                const questionType = questionString.match(/questionType=([^,}]+)/)?.[1];
+
+                const langId = questionString.match(/programmingLanguage=ProgrammingLanguage\{id=(\d+)/)?.[1];
+                const langName = questionString.match(/programmingLanguage=ProgrammingLanguage\{[^}]*name='([^']+)'/)?.[1];
+
+                if (id && title) {
+                    questionObjects.push({
+                        id: parseInt(id),
+                        title,
+                        description: description || '',
+                        difficulty: difficulty || 'EASY',
+                        questionType: questionType || 'CODING',
+                        programmingLanguage: {
+                            id: langId ? parseInt(langId) : 0,
+                            name: langName || 'Unknown'
+                        }
+                    });
+                }
+            });
+        }
+        return questionObjects;
     };
 
     const fetchProgrammingLanguages = async () => {
@@ -675,72 +682,114 @@ const AdminPage = () => {
                     {activeTab === 'questions' && (
                         <div className="question-management slide-in-right">
                             <div className="row">
-                                <div className="col-md-12 mb-4">
-                                    <div className="card shadow">
-                                        <div className="card-header bg-transparent">
+                                <div className="card shadow mb-4">
+                                    <div className="card-header bg-transparent">
+                                        <div className="d-flex justify-content-between align-items-center">
                                             <h3 className="mb-0">
                                                 <i className="fas fa-question-circle me-2"></i>All Questions
                                             </h3>
+                                            <div className="d-flex gap-2">
+                                                <select
+                                                    className="form-select form-select-sm"
+                                                    onChange={(e) => {
+                                                        if (e.target.value === "all") {
+                                                            setFilteredQuestions(questions);
+                                                        } else {
+                                                            const langId = parseInt(e.target.value);
+                                                            setFilteredQuestions(questions.filter(q =>
+                                                                q.programmingLanguage && q.programmingLanguage.id === langId
+                                                            ));
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="all">All Languages</option>
+                                                    {programmingLanguages.map(lang => (
+                                                        <option key={lang.id} value={lang.id}>
+                                                            {lang.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    className="btn btn-sm btn-accent"
+                                                    onClick={() => fetchQuestions()}
+                                                >
+                                                    <i className="fas fa-sync-alt me-1"></i> Refresh
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="card-body p-0">
-                                            {loading && questions.length === 0 ? (
-                                                <div className="text-center p-4">
-                                                    <div className="spinner-border text-accent" role="status">
-                                                        <span className="visually-hidden">Loading...</span>
-                                                    </div>
-                                                    <p className="mt-2 mb-0">Loading questions...</p>
+                                    </div>
+                                    <div className="card-body p-0">
+                                        {loading && filteredQuestions.length === 0 ? (
+                                            <div className="text-center p-4">
+                                                <div className="spinner-border text-accent" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
                                                 </div>
-                                            ) : questions.length === 0 ? (
-                                                <div className="text-center p-4">
-                                                    <p className="mb-0">No questions found</p>
-                                                </div>
-                                            ) : (
-                                                <div className="table-responsive">
-                                                    <table className="table table-hover table-striped mb-0">
-                                                        <thead>
-                                                        <tr>
-                                                            <th>ID</th>
-                                                            <th>Title</th>
-                                                            <th>Language</th>
-                                                            <th>Type</th>
-                                                            <th>Difficulty</th>
-                                                            <th>Actions</th>
+                                                <p className="mt-2 mb-0">Loading questions...</p>
+                                            </div>
+                                        ) : error ? (
+                                            <div className="alert alert-danger m-3" role="alert">
+                                                <i className="fas fa-exclamation-circle me-2"></i>
+                                                {error}
+                                                <button className="btn btn-sm btn-outline-danger mt-2"
+                                                        onClick={fetchQuestions}>
+                                                    <i className="fas fa-sync-alt me-2"></i>Retry
+                                                </button>
+                                            </div>
+                                        ) : filteredQuestions.length === 0 ? (
+                                            <div className="text-center p-4">
+                                                <i className="fas fa-question-circle fa-2x text-muted mb-3"></i>
+                                                <p className="mb-0">No questions found</p>
+                                            </div>
+                                        ) : (
+                                            <div className="table-responsive">
+                                                <table className="table table-hover table-striped mb-0">
+                                                    <thead>
+                                                    <tr>
+                                                        <th className="text-center">ID</th>
+                                                        <th>Title</th>
+                                                        <th>Type</th>
+                                                        <th>Difficulty</th>
+                                                        <th className="text-center">Actions</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    {filteredQuestions.map(question => (
+                                                        <tr key={question.id}
+                                                            className={selectedQuestion?.id === question.id ? 'table-active' : ''}>
+                                                            <td className="text-center">{question.id}</td>
+                                                            <td>
+                                                                <div className="question-title-cell">
+                                                                    {question.title}
+                                                                </div>
+                                                            </td>
+                                                            <td>{question.questionType}</td>
+                                                            <td>
+                                    <span className={`difficulty-badge ${getColorClass(question.difficulty)}`}>
+                                        {question.difficulty}
+                                    </span>
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-accent me-2"
+                                                                    onClick={() => handleEditQuestion(question)}
+                                                                    title="Edit question"
+                                                                >
+                                                                    <i className="fas fa-edit"></i>
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() => handleDeleteQuestion(question.id)}
+                                                                    title="Delete question"
+                                                                >
+                                                                    <i className="fas fa-trash"></i>
+                                                                </button>
+                                                            </td>
                                                         </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        {questions.map(question => (
-                                                            <tr key={question.id}
-                                                                className={selectedQuestion?.id === question.id ? 'table-active' : ''}>
-                                                                <td>{question.id}</td>
-                                                                <td>{question.title}</td>
-                                                                <td>{question.programmingLanguage?.name}</td>
-                                                                <td>{question.questionType}</td>
-                                                                <td>
-                                                                        <span className={`difficulty-badge ${getColorClass(question.difficulty)}`}>
-                                                                            {question.difficulty}
-                                                                        </span>
-                                                                </td>
-                                                                <td>
-                                                                    <button
-                                                                        className="btn btn-sm btn-outline-accent me-2"
-                                                                        onClick={() => handleEditQuestion(question)}
-                                                                    >
-                                                                        <i className="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button
-                                                                        className="btn btn-sm btn-outline-danger"
-                                                                        onClick={() => handleDeleteQuestion(question.id)}
-                                                                    >
-                                                                        <i className="fas fa-trash"></i>
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            )}
-                                        </div>
+                                                    ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -852,7 +901,8 @@ const AdminPage = () => {
                                                                 checked={questionFormData.aiSolutionRequired}
                                                                 onChange={handleAiSolutionChange}
                                                             />
-                                                            <label className="form-check-label" htmlFor="aiSolutionRequired">
+                                                            <label className="form-check-label"
+                                                                   htmlFor="aiSolutionRequired">
                                                                 AI Solution Required
                                                             </label>
                                                         </div>
@@ -860,7 +910,8 @@ const AdminPage = () => {
                                                 </div>
 
                                                 <div className="mb-3">
-                                                    <label htmlFor="description" className="form-label">Description</label>
+                                                    <label htmlFor="description"
+                                                           className="form-label">Description</label>
                                                     <div className="input-group">
                                                         <span className="input-group-text bg-transparent">
                                                             <i className="fas fa-align-left"></i>
@@ -878,7 +929,8 @@ const AdminPage = () => {
                                                 </div>
 
                                                 <div className="mb-3">
-                                                    <label htmlFor="starterCode" className="form-label">Starter Code</label>
+                                                    <label htmlFor="starterCode" className="form-label">Starter
+                                                        Code</label>
                                                     <div className="input-group">
                                                         <span className="input-group-text bg-transparent">
                                                             <i className="fas fa-code"></i>
@@ -895,7 +947,8 @@ const AdminPage = () => {
                                                 </div>
 
                                                 <div className="mb-3">
-                                                    <label htmlFor="correctAnswer" className="form-label">Correct Answer</label>
+                                                    <label htmlFor="correctAnswer" className="form-label">Correct
+                                                        Answer</label>
                                                     <div className="input-group">
                                                         <span className="input-group-text bg-transparent">
                                                             <i className="fas fa-check-circle"></i>
@@ -932,7 +985,8 @@ const AdminPage = () => {
                                                     >
                                                         {loading ? (
                                                             <>
-                                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                                <span className="spinner-border spinner-border-sm me-2"
+                                                                      role="status" aria-hidden="true"></span>
                                                                 Saving...
                                                             </>
                                                         ) : isEditingQuestion ? (
@@ -959,206 +1013,496 @@ const AdminPage = () => {
             </div>
 
             <style>{`
-                .main-content {
-                    min-height: calc(100vh - 250px);
-                }
+    .admin-container {
+        background-color: var(--dark-bg);
+        min-height: calc(100vh - 150px);
+        padding: 2rem 0 4rem;
+    }
+    
+    .admin-header {
+        position: relative;
+        margin-bottom: 3rem;
+        padding-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .admin-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    
+    .admin-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fff, var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.5px;
+    }
+    
+    .admin-subtitle {
+        color: #9fa6b2;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
 
-                .fade-in {
-                    animation: fadeIn 0.5s ease-in-out forwards;
-                }
+    .admin-tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+        gap: 0.75rem;
+        border: none;
+    }
+    
+    .admin-tabs .nav-item {
+        margin: 0;
+    }
+    
+    .admin-tabs .nav-link {
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 0.85rem 1.75rem;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        color: #aaa;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+    }
+    
+    .admin-tabs .nav-link:hover:not(.active) {
+        color: var(--accent);
+        background: rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .admin-tabs .nav-link.active {
+        color: var(--dark-bg);
+        background: var(--accent);
+        font-weight: 600;
+        border-color: var(--accent);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .admin-tabs .nav-link i {
+        margin-right: 0.5rem;
+    }
+    
+    .card {
+        background: #1e2030;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateZ(0);
+    }
+    
+    .card:hover {
+        transform: translateY(-5px) translateZ(0);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 255, 136, 0.1);
+        border-color: rgba(0, 255, 136, 0.2);
+    }
+    
+    .card-header {
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .card-header h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .card-header h3 i {
+        margin-right: 0.75rem;
+        font-size: 1.1em;
+        color: var(--accent);
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-footer {
+        background: rgba(0, 0, 0, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 1rem 1.5rem;
+    }
+    
+    .table {
+        color: #fff;
+        margin-bottom: 0;
+    }
+    
+    .table thead {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .table th {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #9fa6b2;
+        padding: 1rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .table td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        font-size: 0.95rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(0, 255, 136, 0.04);
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd):hover {
+        background-color: rgba(0, 255, 136, 0.05);
+    }
+    
+    .table-active, 
+    .table-active > th, 
+    .table-active > td {
+        background-color: rgba(0, 255, 136, 0.08) !important;
+    }
+    
+    .badge {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 12px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+    }
+    
+    .badge.bg-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+    }
+    
+    .badge.difficulty-easy {
+        background: linear-gradient(135deg, #28a745, #20883a);
+        color: white;
+    }
+    
+    .badge.difficulty-medium {
+        background: linear-gradient(135deg, #fd7e14, #dc6502);
+        color: white;
+    }
+    
+    .badge.difficulty-hard {
+        background: linear-gradient(135deg, #dc3545, #bd2130);
+        color: white;
+    }
+    
+    .btn {
+        font-weight: 500;
+        border-radius: 10px;
+        padding: 0.65rem 1.25rem;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        text-transform: none;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        transition: width 0.3s ease;
+        z-index: 1;
+    }
+    
+    .btn:hover::after {
+        width: 100%;
+    }
+    
+    .btn i {
+        margin-right: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .btn-accent {
+        background: var(--accent);
+        color: #121420;
+        font-weight: 600;
+        border: none;
+    }
+    
+    .btn-accent:hover {
+        background: #00cc6a;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        color: #000;
+    }
+    
+    .btn-outline-accent {
+        color: var(--accent);
+        border: 1.5px solid var(--accent);
+        background: transparent;
+    }
+    
+    .btn-outline-accent:hover {
+        background: var(--accent);
+        color: #121420;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+    }
+    
+    .btn-outline-danger {
+        color: #ff6b6b;
+        border: 1.5px solid #ff6b6b;
+        background: transparent;
+    }
+    
+    .btn-outline-danger:hover {
+        background: #ff6b6b;
+        color: #121420;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
+    }
+    
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+    
+    .btn-lg {
+        padding: 0.8rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .form-label {
+        color: #c2c8d5;
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control, .form-select {
+        background-color: #151825;
+        border: 1px solid #2e334e;
+        color: #fff;
+        border-radius: 10px;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: #191b2a;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+        color: #fff;
+    }
+    
+    .input-group-text {
+        background-color: #1a1d2e;
+        border: 1px solid #2e334e;
+        color: var(--accent);
+        border-radius: 10px 0 0 10px;
+        min-width: 46px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .form-check-input {
+        width: 1.1rem;
+        height: 1.1rem;
+        margin-top: 0.25rem;
+        background-color: #151825;
+        border: 1px solid #2e334e;
+        border-radius: 0.25rem;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.25);
+        border-color: var(--accent);
+    }
+    
+    .form-check-label {
+        color: #c2c8d5;
+    }
+    
+    .is-invalid {
+        border-color: #ff6b6b !important;
+    }
+    
+    .invalid-feedback {
+        color: #ff6b6b;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+    
+    .code-textarea {
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        background-color: #15192d;
+        color: #f8f8f2;
+        border: 1px solid #2e334e;
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.6s ease forwards;
+    }
+    
+    .fade-in-up {
+        animation: fadeInUp 0.7s ease forwards;
+    }
+    
+    .slide-in-right {
+        animation: slideInRight 0.6s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes fadeInUp {
+        from { 
+            opacity: 0; 
+            transform: translateY(20px);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
 
-                .fade-in-up {
-                    animation: fadeInUp 0.5s ease-in-out forwards;
-                }
-
-                .slide-in-right {
-                    animation: slideInRight 0.5s ease-in-out forwards;
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-
-                .card {
-                    border-radius: 15px;
-                    overflow: hidden;
-                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-                    border: 1px solid #333;
-                    margin-bottom: 25px;
-                    transition: all 0.3s ease;
-                }
-
-                .card:hover {
-                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-                    border-color: var(--accent);
-                }
-
-                .admin-header h1 {
-                    font-size: 2.5rem;
-                    color: var(--accent);
-                    margin-bottom: 0.5rem;
-                }
-
-                .admin-subtitle {
-                    color: #9fa6b2;
-                    font-size: 1.1rem;
-                }
-
-                .admin-tabs .nav-link {
-                    color: #ccc;
-                    border: none;
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 10px 10px 0 0;
-                    margin-right: 5px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-                }
-
-                .admin-tabs .nav-link:hover:not(.active) {
-                    background-color: rgba(0, 255, 136, 0.1);
-                    color: var(--accent);
-                }
-
-                .admin-tabs .nav-link.active {
-                    background-color: var(--dark-secondary);
-                    color: var(--accent);
-                    border-bottom: 3px solid var(--accent);
-                }
-
-                .btn-accent {
-                    background-color: var(--accent);
-                    color: var(--dark-bg);
-                    border: none;
-                    transition: all 0.3s ease;
-                    font-weight: 600;
-                    padding: 10px;
-                    border-radius: 8px;
-                    letter-spacing: 1px;
-                }
-
-                .btn-accent:hover:not(:disabled) {
-                    background-color: #00cc6a;
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
-                }
-
-                .btn-outline-accent {
-                    color: var(--accent);
-                    border-color: var(--accent);
-                    background-color: transparent;
-                    transition: all 0.3s ease;
-                }
-
-                .btn-outline-accent:hover {
-                    background-color: var(--accent);
-                    color: var(--dark-bg);
-                }
-
-                .form-control, .form-select {
-                    background-color: #fff;
-                    border: 1px solid #ccc;
-                    color: #333;
-                    border-radius: 8px;
-                    padding: 0.6rem 1rem;
-                }
-
-                .form-control:focus, .form-select:focus {
-                    border-color: var(--accent);
-                    box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.25);
-                    background-color: #fff;
-                    color: #333;
-                }
-
-                .input-group-text {
-                    border-radius: 8px;
-                    padding: 10px 15px;
-                    border-top-right-radius: 0;
-                    border-bottom-right-radius: 0;
-                    background-color: var(--dark-secondary);
-                    border-color: #444;
-                    color: var(--accent);
-                    min-width: 45px;
-                    display: flex;
-                    justify-content: center;
-                }
-
-                .input-group .form-control, .input-group .form-select {
-                    border-top-left-radius: 0;
-                    border-bottom-left-radius: 0;
-                }
-
-                .code-textarea {
-                    font-family: monospace;
-                    font-size: 0.9rem;
-                }
-
-                .table {
-                    color: #fff;
-                }
-
-                .table tr {
-                    transition: all 0.3s ease;
-                }
-
-                .table tr:hover {
-                    background-color: rgba(0, 255, 136, 0.05);
-                }
-
-                .table-active {
-                    background-color: rgba(0, 255, 136, 0.1) !important;
-                }
-
-                .difficulty-badge {
-                    display: inline-block;
-                    padding: 0.35rem 0.8rem;
-                    border-radius: 50px;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                }
-
-                .difficulty-easy {
-                    background-color: rgba(40, 167, 69, 0.2);
-                    color: #5cb85c;
-                }
-
-                .difficulty-medium {
-                    background-color: rgba(255, 193, 7, 0.2);
-                    color: #ffc107;
-                }
-
-                .difficulty-hard {
-                    background-color: rgba(220, 53, 69, 0.2);
-                    color: #ff6b6b;
-                }
-
-                .form-check-input:checked {
-                    background-color: var(--accent);
-                    border-color: var(--accent);
-                }
-            `}</style>
+    .alert {
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        border: 1px solid transparent;
+        margin-bottom: 1.5rem;
+    }
+    
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border-color: rgba(220, 53, 69, 0.2);
+    }
+    
+    .alert-success {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #2ecc71;
+        border-color: rgba(40, 167, 69, 0.2);
+    }
+    
+    .alert-info {
+        background-color: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        border-color: rgba(23, 162, 184, 0.2);
+    }
+    
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border-color: rgba(255, 193, 7, 0.2);
+    }
+    
+    @media (max-width: 992px) {
+        .admin-header h1 {
+            font-size: 2.2rem;
+        }
+        
+        .admin-tabs .nav-link {
+            padding: 0.7rem 1.2rem;
+            font-size: 0.9rem;
+        }
+        
+        .table th, .table td {
+            padding: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .admin-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .admin-tabs {
+            flex-wrap: wrap;
+        }
+        
+        .admin-tabs .nav-link {
+            flex: 1;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+`}</style>
         </Layout>
     );
 };

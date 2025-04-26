@@ -1,5 +1,6 @@
 import axios from "axios";
-import { API_BASE_URL, ACCESS_TOKEN, GOOGLE_AUTH_URL, GITHUB_AUTH_URL } from "../constants";
+import Cookies from "js-cookie";
+import { API_BASE_URL, GOOGLE_AUTH_URL, GITHUB_AUTH_URL } from "../constants";
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -10,7 +11,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem(ACCESS_TOKEN);
+    const token = Cookies.get('jwtToken');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +28,6 @@ const toFormData = (data) => {
     return params;
 };
 
-
 export const authService = {
     registerUser: async (userData) => {
         try {
@@ -43,9 +43,8 @@ export const authService = {
         try {
             const response = await apiClient.post("/api/user/login", toFormData(credentials));
             if (response.data.token) {
-                localStorage.setItem(ACCESS_TOKEN, response.data.token);
+                Cookies.set('jwtToken', response.data.token, { expires: 1, sameSite: 'Lax' });
             }
-
             return response.data;
         } catch (error) {
             console.error('Login Error:', error);
@@ -56,7 +55,7 @@ export const authService = {
     logoutUser: async () => {
         try {
             const response = await apiClient.get("/api/user/logout");
-            localStorage.removeItem(ACCESS_TOKEN);
+            Cookies.remove('jwtToken');
             return response.data;
         } catch (error) {
             console.error('Logout Error:', error);
@@ -77,7 +76,7 @@ export const authService = {
             if (!token) {
                 throw new Error('Authentication failed: No token received');
             }
-            localStorage.setItem(ACCESS_TOKEN, token);
+            Cookies.set('jwtToken', token, { expires: 1, sameSite: 'Lax' });
             window.history.replaceState({}, document.title, window.location.pathname);
             return await authService.getCurrentUser();
         } catch (error) {
@@ -97,7 +96,7 @@ export const authService = {
     },
 
     isAuthenticated: () => {
-        const token = localStorage.getItem(ACCESS_TOKEN);
+        const token = Cookies.get('jwtToken');
         return !!token;
     }
 };

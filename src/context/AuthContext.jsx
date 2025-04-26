@@ -1,13 +1,11 @@
-import React, {
-    createContext, useContext,
-    useState, useCallback, useEffect
-} from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import Cookies from 'js-cookie';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(() => {
-        const token = localStorage.getItem('jwtToken');
+        const token = Cookies.get('jwtToken');
         return token ? { token, loading: true } : null;
     });
 
@@ -52,7 +50,7 @@ export function AuthProvider({ children }) {
     }, [user]);
 
     const login = useCallback(async (token) => {
-        localStorage.setItem('jwtToken', token);
+        Cookies.set('jwtToken', token, { expires: 1, sameSite: 'Lax' });
         setUser({ token, loading: true });
         const profile = await loadProfile(token);
         if (profile?.username) {
@@ -68,7 +66,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const logout = useCallback(() => {
-        localStorage.removeItem('jwtToken');
+        Cookies.remove('jwtToken');
         setUser(null);
     }, []);
 

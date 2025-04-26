@@ -72,6 +72,17 @@ export const getAllQuestions = async () => {
     }
 };
 
+
+export const getQuestionsByLanguage = async (languageId) => {
+    try {
+        const response = await axiosClient.get(`${API_URL}/get_questions_by_language/${languageId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching questions for language ID ${languageId}:`, error);
+        throw error;
+    }
+};
+
 export const getQuestionById = async (questionId) => {
     try {
         const response = await axiosClient.get(`${API_URL}/question/${questionId}`);

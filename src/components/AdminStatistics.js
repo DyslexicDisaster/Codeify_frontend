@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getAdminStatistics } from '../services/adminStatsService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+    PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 
 const COLORS = ['#00C49F', '#0088FE', '#FFBB28', '#FF8042', '#9370DB', '#3CB371'];
